@@ -244,6 +244,7 @@ def walk_forward(
             and grade_rank > prev_rank
         )
 
+        old_prev_grade = prev_grade   # capture before updating
         prev_grade = grade
 
         if not new_signal:
@@ -260,7 +261,7 @@ def walk_forward(
         signals.append({
             "symbol":            symbol,
             "grade":             grade,
-            "prev_grade":        prev_grade if prev_grade else "",
+            "prev_grade":        old_prev_grade if old_prev_grade else "",
             "signal_date":       up_to_ts.date().isoformat(),
             "entry_price":       entry_price,
             "weekly_div":        weekly_div.get("confirmed", False),
