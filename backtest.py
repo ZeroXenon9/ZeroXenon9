@@ -33,10 +33,16 @@ import time
 from typing import Dict, List, Optional, Any
 
 import pandas as pd
+import requests
 
 import config
-from data.fetcher import get_exchange
 from grading.signal_grader import grade_signal, GRADE_RANK
+
+# Binance public klines endpoints — .com first, .us as fallback (for US users)
+_BINANCE_HOSTS = [
+    "https://api.binance.com",
+    "https://api.binance.us",
+]
 
 # ── constants ─────────────────────────────────────────────────────────────────
 
@@ -66,12 +72,34 @@ _WARMUP_BY_MIN_GRADE = {
 
 # ── paginated data fetcher ────────────────────────────────────────────────────
 
+def _binance_klines(bin_symbol: str, tf: str, since_ms: int, limit: int = 1000) -> list:
+    """
+    Call Binance public klines endpoint directly — no API key, no ccxt.
+    Tries binance.com first, then binance.us (for US users).
+    Returns raw list of kline arrays, or [] on total failure.
+    """
+    for host in _BINANCE_HOSTS:
+        try:
+            resp = requests.get(
+                f"{host}/api/v3/klines",
+                params={"symbol": bin_symbol, "interval": tf,
+                        "startTime": since_ms, "limit": limit},
+                timeout=15,
+            )
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception:
+            continue
+    return []
+
+
 def fetch_history(symbol: str, tf: str, lookback_days: int) -> Optional[pd.DataFrame]:
     """
-    Fetch up to `lookback_days` of historical OHLCV for `symbol` on `tf`.
+    Fetch up to `lookback_days` of historical OHLCV using Binance's public
+    klines API directly (no API key required, no ccxt exchangeInfo call).
 
-    Uses paginated requests (up to _PAGE candles each) so it works for
-    high-frequency timeframes (4h → 2 190 candles/year, 1h → 8 760/year).
+    Paginates automatically for high-frequency timeframes
+    (4h needs ~2 190 candles/year, 1h needs ~8 760).
 
     Returns a DataFrame indexed by open-time (UTC), last incomplete candle
     dropped.  Returns None on failure.
@@ -80,32 +108,35 @@ def fetch_history(symbol: str, tf: str, lookback_days: int) -> Optional[pd.DataF
     mins_per_candle = tf_mins.get(tf, 1440)
     needed_candles  = (lookback_days * 1440) // mins_per_candle + 5
 
-    exchange = get_exchange()
-    since_ms = (
-        pd.Timestamp.utcnow() - pd.Timedelta(days=lookback_days)
-    ).value // 1_000_000   # ccxt uses integer milliseconds
+    # "BTC/USDT" → "BTCUSDT"
+    bin_symbol = symbol.replace("/", "")
+
+    since_ms = int(
+        (pd.Timestamp.now("UTC") - pd.Timedelta(days=lookback_days))
+        .timestamp() * 1000
+    )
 
     all_rows = []
-    try:
-        while True:
-            batch = exchange.fetch_ohlcv(symbol, tf, since=since_ms, limit=_PAGE)
-            if not batch:
-                break
-            all_rows.extend(batch)
-            if len(batch) < _PAGE:
-                break
-            since_ms = batch[-1][0] + 1        # advance past last returned ts
-            if len(all_rows) >= needed_candles:
-                break
-            time.sleep(exchange.rateLimit / 1000)
-    except Exception as exc:
-        print(f"      [{tf}] error: {exc}")
-        return None
+    while True:
+        batch = _binance_klines(bin_symbol, tf, since_ms, limit=_PAGE)
+        if not batch:
+            break
+        all_rows.extend(batch)
+        if len(batch) < _PAGE or len(all_rows) >= needed_candles:
+            break
+        since_ms = batch[-1][0] + 1     # advance past last returned timestamp
+        time.sleep(0.1)                  # polite rate limiting
 
     if not all_rows:
         return None
 
-    df = pd.DataFrame(all_rows, columns=["timestamp", "open", "high", "low", "close", "volume"])
+    df = pd.DataFrame(all_rows,
+                      columns=["timestamp", "open", "high", "low", "close",
+                               "volume", "close_time", "qav", "trades",
+                               "tbbav", "tbqav", "ignore"])
+    df = df[["timestamp", "open", "high", "low", "close", "volume"]].copy()
+    for col in ["open", "high", "low", "close", "volume"]:
+        df[col] = df[col].astype(float)
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True).dt.tz_localize(None)
     df.drop_duplicates("timestamp", inplace=True)
     df.set_index("timestamp", inplace=True)
@@ -119,7 +150,7 @@ def build_symbol_data(symbol: str, lookback_days: int) -> Dict[str, Optional[pd.
     dfs: Dict[str, Optional[pd.DataFrame]] = {}
     for tf in config.TIMEFRAMES:
         dfs[tf] = fetch_history(symbol, tf, lookback_days)
-        time.sleep(0.05)
+        time.sleep(0.1)
     return dfs
 
 
