@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FaceFilter — Delete Photos by Person</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <span class="logo-icon">🔍</span>
+      <span class="logo-text">FaceFilter</span>
+    </div>
+    <p class="tagline">Upload your photos, then remove all images of a specific person in one click.</p>
+    {% if backend == 'opencv' %}
+    <div class="notice notice--warn">
+      ⚠️ Running in <strong>basic mode</strong> (OpenCV). Install <code>face_recognition</code> for much better accuracy.
+    </div>
+    {% else %}
+    <div class="notice notice--ok">
+      ✅ Running in <strong>full accuracy mode</strong> (face_recognition).
+    </div>
+    {% endif %}
+  </header>
+
+  <main>
+    <!-- ── Step 1: Upload photos ── -->
+    <section class="card" id="section-upload">
+      <h2><span class="step">1</span> Upload Your Photos</h2>
+      <p class="hint">Drag &amp; drop or click to select — supports JPG, PNG, WEBP, GIF.</p>
+
+      <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Upload photos">
+        <div class="drop-zone__icon">📁</div>
+        <div class="drop-zone__label">Drop photos here or <u>browse</u></div>
+        <input type="file" id="file-input" accept="image/*" multiple hidden />
+      </div>
+
+      <div id="upload-queue" class="file-list hidden"></div>
+
+      <button class="btn btn--primary" id="btn-upload" disabled>
+        <span class="btn-label">Upload Photos</span>
+        <span class="spinner hidden"></span>
+      </button>
+
+      <div id="upload-status" class="status-msg hidden"></div>
+    </section>
+
+    <!-- ── Step 2: Gallery ── -->
+    <section class="card" id="section-gallery">
+      <div class="section-header">
+        <h2><span class="step">2</span> Your Photo Library</h2>
+        <button class="btn btn--ghost btn--sm" id="btn-refresh">↻ Refresh</button>
+      </div>
+      <p class="hint" id="gallery-hint">No photos yet — upload some above.</p>
+      <div class="gallery" id="gallery"></div>
+    </section>
+
+    <!-- ── Step 3: Find & Delete ── -->
+    <section class="card" id="section-find">
+      <h2><span class="step">3</span> Find &amp; Delete a Person</h2>
+      <p class="hint">Upload one clear, front-facing photo of the person you want to remove.</p>
+
+      <div class="find-layout">
+        <div class="ref-upload-area">
+          <div class="drop-zone drop-zone--small" id="ref-drop-zone" tabindex="0" role="button" aria-label="Upload reference photo">
+            <div id="ref-preview-wrap">
+              <div class="drop-zone__icon">🤳</div>
+              <div class="drop-zone__label">Reference photo</div>
+            </div>
+            <input type="file" id="ref-input" accept="image/*" hidden />
+          </div>
+          <button class="btn btn--primary" id="btn-find" disabled>
+            <span class="btn-label">🔍 Find This Person</span>
+            <span class="spinner hidden"></span>
+          </button>
+        </div>
+
+        <div class="results-area">
+          <div id="find-status" class="status-msg hidden"></div>
+          <div id="results-header" class="results-header hidden">
+            <span id="results-count"></span>
+            <button class="btn btn--danger" id="btn-delete-all">🗑️ Delete All Matches</button>
+          </div>
+          <div class="gallery" id="results-gallery"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>FaceFilter — all processing happens on <strong>your server</strong>. No data leaves your machine.</p>
+  </footer>
+
+  <!-- ── Lightbox ── -->
+  <div class="lightbox hidden" id="lightbox" role="dialog" aria-modal="true">
+    <button class="lightbox__close" id="lb-close" aria-label="Close">✕</button>
+    <img id="lb-img" src="" alt="" />
+    <div class="lightbox__caption" id="lb-caption"></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
