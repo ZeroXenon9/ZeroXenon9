@@ -3,39 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FaceFilter — Delete Photos by Person</title>
+  <title>FaceFilter</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
 <body>
-  <header>
+
+  <!-- ── Nav ── -->
+  <nav class="topnav">
     <div class="logo">
       <span class="logo-icon">🔍</span>
       <span class="logo-text">FaceFilter</span>
     </div>
-    <p class="tagline">Upload your photos, then remove all images of a specific person in one click.</p>
-    {% if backend == 'opencv' %}
-    <div class="notice notice--warn">
-      ⚠️ Running in <strong>basic mode</strong> (OpenCV). Install <code>face_recognition</code> for much better accuracy.
+    <div class="nav-right">
+      <span class="nav-user">👤 {{ user.username }}</span>
+      {% if backend == 'opencv' %}
+      <span class="badge badge--warn">Basic mode</span>
+      {% else %}
+      <span class="badge badge--ok">Full accuracy</span>
+      {% endif %}
+      <button class="btn btn--ghost btn--sm" id="btn-logout">Sign out</button>
     </div>
-    {% else %}
-    <div class="notice notice--ok">
-      ✅ Running in <strong>full accuracy mode</strong> (face_recognition).
-    </div>
-    {% endif %}
-  </header>
+  </nav>
 
   <main>
-    <!-- ── Step 1: Upload photos ── -->
-    <section class="card" id="section-upload">
-      <h2><span class="step">1</span> Upload Your Photos</h2>
-      <p class="hint">Drag &amp; drop or click to select — supports JPG, PNG, WEBP, GIF.</p>
 
-      <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Upload photos">
-        <div class="drop-zone__icon">📁</div>
-        <div class="drop-zone__label">Drop photos here or <u>browse</u></div>
-        <input type="file" id="file-input" accept="image/*" multiple hidden />
+    <!-- ── Step 1: Upload ── -->
+    <section class="card" id="section-upload">
+      <h2><span class="step">1</span> Upload Photos</h2>
+      <p class="hint">Drag &amp; drop or browse — JPG, PNG, WEBP, GIF up to 20 MB each.</p>
+
+      <div class="upload-toolbar">
+        <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Browse files">
+          <div class="drop-zone__icon">📁</div>
+          <div class="drop-zone__label">Drop photos here or <u>browse</u></div>
+          <input type="file" id="file-input" accept="image/*" multiple hidden />
+        </div>
+        <button class="btn btn--ghost btn--sm camera-btn" id="btn-camera" title="Take a photo">
+          📷 Camera
+          <input type="file" id="camera-input" accept="image/*" capture="environment" hidden />
+        </button>
       </div>
 
+      <!-- Album selector for upload -->
+      <div class="upload-options">
+        <label class="field-inline">
+          <span>Add to album:</span>
+          <select id="upload-album-select">
+            <option value="">— No album —</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- File queue -->
       <div id="upload-queue" class="file-list hidden"></div>
 
       <button class="btn btn--primary" id="btn-upload" disabled>
@@ -49,43 +68,69 @@
     <!-- ── Step 2: Gallery ── -->
     <section class="card" id="section-gallery">
       <div class="section-header">
-        <h2><span class="step">2</span> Your Photo Library</h2>
+        <h2><span class="step">2</span> Your Library</h2>
         <button class="btn btn--ghost btn--sm" id="btn-refresh">↻ Refresh</button>
       </div>
-      <p class="hint" id="gallery-hint">No photos yet — upload some above.</p>
+
+      <!-- Album filter pills -->
+      <div class="album-bar" id="album-bar">
+        <button class="album-pill active" data-album-id="">All Photos</button>
+        <!-- dynamic pills added here -->
+        <button class="album-pill album-pill--new" id="btn-new-album">＋ New Album</button>
+      </div>
+
+      <p class="hint hidden" id="gallery-hint">No photos yet — upload some above.</p>
       <div class="gallery" id="gallery"></div>
     </section>
 
     <!-- ── Step 3: Find & Delete ── -->
     <section class="card" id="section-find">
       <h2><span class="step">3</span> Find &amp; Delete a Person</h2>
-      <p class="hint">Upload one clear, front-facing photo of the person you want to remove.</p>
+      <p class="hint">Upload one or more clear, front-facing photos of the person you want to remove.</p>
 
       <div class="find-layout">
-        <div class="ref-upload-area">
-          <div class="drop-zone drop-zone--small" id="ref-drop-zone" tabindex="0" role="button" aria-label="Upload reference photo">
-            <div id="ref-preview-wrap">
+        <!-- Left: reference photo(s) + controls -->
+        <div class="ref-col">
+          <div class="drop-zone drop-zone--small" id="ref-drop-zone" tabindex="0" role="button" aria-label="Add reference photo">
+            <div id="ref-previews"></div>
+            <div id="ref-placeholder">
               <div class="drop-zone__icon">🤳</div>
-              <div class="drop-zone__label">Reference photo</div>
+              <div class="drop-zone__label">Reference photo(s)</div>
             </div>
-            <input type="file" id="ref-input" accept="image/*" hidden />
+            <input type="file" id="ref-input" accept="image/*" multiple hidden />
           </div>
-          <button class="btn btn--primary" id="btn-find" disabled>
+          <button class="btn btn--ghost btn--sm" id="btn-add-ref" style="width:100%;margin-bottom:.5rem">＋ Add another reference</button>
+
+          <!-- Sensitivity slider -->
+          <div class="slider-wrap">
+            <label class="slider-label">
+              Sensitivity
+              <span class="slider-val" id="tol-val">Medium</span>
+            </label>
+            <input type="range" id="tolerance-slider" min="1" max="3" step="1" value="2" />
+            <div class="slider-ticks">
+              <span>Strict</span><span>Medium</span><span>Loose</span>
+            </div>
+          </div>
+
+          <button class="btn btn--primary" id="btn-find" disabled style="width:100%;margin-top:.75rem">
             <span class="btn-label">🔍 Find This Person</span>
             <span class="spinner hidden"></span>
           </button>
         </div>
 
-        <div class="results-area">
+        <!-- Right: results -->
+        <div class="results-col">
           <div id="find-status" class="status-msg hidden"></div>
           <div id="results-header" class="results-header hidden">
             <span id="results-count"></span>
-            <button class="btn btn--danger" id="btn-delete-all">🗑️ Delete All Matches</button>
+            <button class="btn btn--danger btn--sm" id="btn-delete-all">🗑️ Delete All</button>
           </div>
           <div class="gallery" id="results-gallery"></div>
         </div>
       </div>
     </section>
+
   </main>
 
   <footer>
@@ -97,6 +142,18 @@
     <button class="lightbox__close" id="lb-close" aria-label="Close">✕</button>
     <img id="lb-img" src="" alt="" />
     <div class="lightbox__caption" id="lb-caption"></div>
+  </div>
+
+  <!-- ── New album dialog ── -->
+  <div class="dialog-overlay hidden" id="album-dialog">
+    <div class="dialog">
+      <h3>New Album</h3>
+      <input type="text" id="album-name-input" placeholder="Album name" maxlength="60" />
+      <div class="dialog-actions">
+        <button class="btn btn--ghost btn--sm" id="album-cancel">Cancel</button>
+        <button class="btn btn--primary btn--sm" id="album-confirm">Create</button>
+      </div>
+    </div>
   </div>
 
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
