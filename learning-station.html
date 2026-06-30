@@ -118,6 +118,59 @@
   .llink{font-size:.8rem; color:var(--accent); text-decoration:none;}
   .llink:hover{text-decoration:underline;}
 
+  /* Project challenge card */
+  .project{
+    border:1px solid var(--purple); border-radius:10px; margin:16px 0 4px;
+    background:linear-gradient(180deg,rgba(188,140,255,.10),rgba(188,140,255,.03));
+    overflow:hidden;
+  }
+  .project.done{border-color:var(--green);}
+  .project-head{display:flex; align-items:flex-start; gap:11px; padding:13px 15px; cursor:pointer;}
+  .project-head:hover{background:rgba(188,140,255,.08);}
+  .project-head input{
+    appearance:none; -webkit-appearance:none; flex:none;
+    width:21px; height:21px; border:2px solid var(--purple); border-radius:5px;
+    margin-top:1px; cursor:pointer; position:relative; background:var(--bg);
+  }
+  .project-head input:checked{background:var(--green); border-color:var(--green);}
+  .project-head input:checked::after{content:"✓"; color:#0d1117; font-weight:700; font-size:.85rem; position:absolute; top:-1px; left:4px;}
+  .project-head .pt{flex:1;}
+  .project-head .pt .ptag{font-size:.68rem; letter-spacing:1px; text-transform:uppercase; color:var(--purple);}
+  .project-head .pt .pname{font-weight:600; margin-top:2px;}
+  .project.done .pt .pname{color:var(--muted);}
+  .project-head .pchev{color:var(--muted); font-size:.8rem; transition:transform .2s;}
+  .project.popen .pchev{transform:rotate(90deg);}
+  .project-content{display:none; padding:2px 16px 16px 47px; font-size:.9rem;}
+  .project.popen .project-content{display:block;}
+  .project-content h4{font-size:.74rem; text-transform:uppercase; letter-spacing:.5px; color:var(--purple); margin:13px 0 5px;}
+  .project-content ul{margin:5px 0 5px 18px;}
+  .project-content li{margin:3px 0;}
+  .pass{background:rgba(63,185,80,.1); border-left:3px solid var(--green); border-radius:6px; padding:9px 13px; margin:11px 0; font-size:.88rem;}
+  .pass b{color:var(--green);}
+
+  /* Grand challenge */
+  .grand{
+    border:2px solid var(--amber); border-radius:12px; margin:24px 0 10px; overflow:hidden;
+    background:linear-gradient(180deg,rgba(210,153,34,.12),rgba(210,153,34,.03));
+  }
+  .grand-head{display:flex; align-items:flex-start; gap:12px; padding:16px 18px; cursor:pointer;}
+  .grand-head:hover{background:rgba(210,153,34,.08);}
+  .grand-head input{
+    appearance:none; -webkit-appearance:none; flex:none;
+    width:22px; height:22px; border:2px solid var(--amber); border-radius:5px;
+    margin-top:1px; cursor:pointer; position:relative; background:var(--bg);
+  }
+  .grand-head input:checked{background:var(--green); border-color:var(--green);}
+  .grand-head input:checked::after{content:"✓"; color:#0d1117; font-weight:700; font-size:.9rem; position:absolute; top:0; left:4px;}
+  .grand-head .gt h2{font-size:1.2rem;}
+  .grand-head .gt .gtag{font-size:.7rem; letter-spacing:1px; text-transform:uppercase; color:var(--amber);}
+  .grand-content{display:none; padding:2px 18px 18px 50px; font-size:.92rem;}
+  .grand.gopen .grand-content{display:block;}
+  .grand-head .gchev{color:var(--muted); transition:transform .2s; margin-left:auto;}
+  .grand.gopen .gchev{transform:rotate(90deg);}
+  .grand-content h4{font-size:.74rem; text-transform:uppercase; letter-spacing:.5px; color:var(--amber); margin:13px 0 5px;}
+  .grand-content ul{margin:5px 0 5px 18px;}
+
   .log{margin-top:14px;}
   .log label{display:block; font-size:.8rem; color:var(--muted); margin-bottom:6px;}
   .log textarea{
@@ -710,7 +763,100 @@ make</code></pre>
 }
 ];
 
-const KEY = "g1-learning-station-v2";
+// One build per stage that forces you to combine that stage's skills.
+const PROJECTS = {
+  wsl:{
+    name:"Backup & Project Toolkit",
+    brief:"Build a small command-line workflow that proves you can live in the terminal and version your work with git.",
+    reqs:[
+      "Create a clean <code>~/projects</code> structure with at least two nested folders (use <code>mkdir -p</code>).",
+      "Write a script <code>backup.sh</code> that copies a folder into <code>/mnt/c/</code> (your Windows side) and prints a confirmation.",
+      "Make it executable with <code>chmod +x backup.sh</code> and run it with <code>./backup.sh</code>.",
+      "Turn the folder into a git repo: <code>git init</code>, commit the script, write a clear commit message."
+    ],
+    stretch:[
+      "Add a timestamp to the backup folder name using <code>$(date +%F)</code>.",
+      "Push the repo to a new GitHub repository."
+    ],
+    pass:"You can build the structure, run your script, and show <code>git log</code> with at least one commit — all without copying commands from notes."
+  },
+  python:{
+    name:"Robot Mission Logger (CLI app)",
+    brief:"A text-based program that tracks 'missions' for your future robot. Touches every Python lesson at once.",
+    reqs:[
+      "A <code>Mission</code> class with a name and a done/not-done status.",
+      "A menu loop (<code>while</code> + <code>input()</code>) to add, list, and complete missions.",
+      "Save missions to a file and reload them when the program restarts.",
+      "Wrap risky input (like choosing a menu number) in <code>try/except</code> so bad input never crashes it."
+    ],
+    stretch:[
+      "Add priorities and sort the list by priority.",
+      "Track a timestamp for when each mission was completed."
+    ],
+    pass:"You can add a few missions, quit, restart the program, and your missions are still there — with no crash on bad input."
+  },
+  ros2:{
+    name:"Obstacle-Avoider (3-node system)",
+    brief:"A miniature sense→decide→act robot brain — the exact pattern you'll use on the G1, but with fake data.",
+    reqs:[
+      "A <b>sensor</b> node that publishes a fake distance reading (e.g. a random number) on a topic.",
+      "A <b>brain</b> node that subscribes to the distance and publishes a command: 'GO' if far, 'STOP' if too close.",
+      "A <b>motor</b> node that subscribes to the command and logs what it would do.",
+      "All three live in one colcon package you built, launched with <code>ros2 run</code>."
+    ],
+    stretch:[
+      "Add a parameter for the stop-distance threshold so you can tune it without editing code.",
+      "Open <code>rqt_graph</code> and screenshot the three nodes connected by topics."
+    ],
+    pass:"All three nodes run together and you can see the motor reacting in real time as the sensor values cross the threshold."
+  },
+  cpp:{
+    name:"Fast Stats Engine",
+    brief:"Rebuild real logic in compiled C++ — organized, fast, and built the way the SDK is built.",
+    reqs:[
+      "A <code>Stats</code> class (split into <code>stats.h</code> / <code>stats.cpp</code>) that takes a <code>std::vector&lt;double&gt;</code>.",
+      "Methods for mean, min, max, and count.",
+      "A <code>main.cpp</code> that fills a vector and prints all the stats.",
+      "Built with a <code>CMakeLists.txt</code> (not a hand-typed g++ command)."
+    ],
+    stretch:[
+      "Add standard deviation.",
+      "Wrap it as a ROS2 C++ node that publishes the computed mean on a topic."
+    ],
+    pass:"<code>cmake .. && make && ./app</code> compiles cleanly and prints correct stats from your Stats class."
+  },
+  g1sdk:{
+    name:"Reactive Posture Guardian",
+    brief:"Your first real safety-aware robot behavior — read state, decide, act, all within limits.",
+    reqs:[
+      "Read the robot's orientation/IMU state in a loop.",
+      "Decide: if tilt exceeds a safe threshold you define, trigger a safe damping/standing response.",
+      "Send that command through a clean control loop at a steady rate.",
+      "Keep a working emergency stop and test only with the robot supported."
+    ],
+    stretch:[
+      "Log every state+decision to a file so you can review the run afterward.",
+      "Make the threshold a tunable variable and test a few values safely."
+    ],
+    pass:"With the robot safely supported, your program reads live state and triggers the correct safe response when you tilt it past the threshold."
+  }
+};
+
+// Final integration project across every stage.
+const GRAND = {
+  name:"Grand Challenge: Autonomous Behavior, End to End",
+  brief:"Prove the whole stack came together. Build one project that uses every skill from WSL to the SDK.",
+  reqs:[
+    "<b>WSL/git:</b> the whole project lives in a git repo you push to GitHub.",
+    "<b>Python or C++:</b> your own clean, well-structured code (classes, functions, error handling).",
+    "<b>ROS2:</b> at least two nodes communicating — a sense→decide→act loop.",
+    "<b>SDK:</b> reads real G1 state and sends a safe, original behavior in response.",
+    "A README explaining what it does, how to run it, and the safety limits."
+  ],
+  pass:"Someone could clone your repo, read the README, and run your behavior on a G1 safely. At that point you are, by any reasonable definition, an intermediate robot programmer."
+};
+
+const KEY = "g1-learning-station-v3";
 function loadState(){ try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return {};} }
 function saveState(s){ localStorage.setItem(KEY, JSON.stringify(s)); }
 let state = loadState();
@@ -721,9 +867,11 @@ function taskKey(sid,i){ return sid+":"+i; }
 function findNext(){
   for(const stage of ROADMAP){
     for(let i=0;i<stage.tasks.length;i++){
-      if(!state[taskKey(stage.id,i)]) return {stage, i};
+      if(!state[taskKey(stage.id,i)]) return {stage, i, label:stage.tasks[i].t};
     }
+    if(!state["proj:"+stage.id]) return {stage, project:true, label:"🎯 Project: "+PROJECTS[stage.id].name};
   }
+  if(!state["grand"]) return {grand:true, label:"🏆 "+GRAND.name};
   return null;
 }
 
@@ -736,22 +884,34 @@ function render(){
   const nu = document.getElementById("nextup");
   if(next){
     nu.style.display="flex";
+    const where = next.grand ? "Final integration challenge" : "Stage: "+next.stage.title;
     nu.innerHTML = `<div><div class="tag">▶ Next up</div>
-      <div class="what">${next.stage.tasks[next.i].t}</div>
-      <div class="where">Stage: ${next.stage.title}</div></div>
+      <div class="what">${next.label}</div>
+      <div class="where">${where}</div></div>
       <div class="go">→</div>`;
     nu.onclick = ()=>{
+      if(next.grand){
+        state["gopen"]=true; saveState(state); render();
+        const g=document.getElementById("grand"); if(g) g.scrollIntoView({behavior:"smooth", block:"center"});
+        return;
+      }
       state["open:"+next.stage.id]=true;
-      state["lopen:"+taskKey(next.stage.id,next.i)]=true;
-      saveState(state); render();
-      const el = document.getElementById("lesson-"+taskKey(next.stage.id,next.i));
-      if(el) el.scrollIntoView({behavior:"smooth", block:"center"});
+      if(next.project){
+        state["popen:"+next.stage.id]=true; saveState(state); render();
+        const p=document.getElementById("project-"+next.stage.id);
+        if(p) p.scrollIntoView({behavior:"smooth", block:"center"});
+      } else {
+        state["lopen:"+taskKey(next.stage.id,next.i)]=true; saveState(state); render();
+        const el = document.getElementById("lesson-"+taskKey(next.stage.id,next.i));
+        if(el) el.scrollIntoView({behavior:"smooth", block:"center"});
+      }
     };
   } else { nu.style.display="none"; }
 
   let firstIncompleteFound=false;
   ROADMAP.forEach((stage,sIdx)=>{
-    const total=stage.tasks.length; let done=0;
+    const projDone = !!state["proj:"+stage.id];
+    const total=stage.tasks.length+1; let done=projDone?1:0;   // +1 for the project
     stage.tasks.forEach((_,i)=>{ if(state[taskKey(stage.id,i)]) done++; });
     totalAll+=total; doneAll+=done;
     const complete = done===total;
@@ -779,6 +939,7 @@ function render(){
         <div class="why">💡 ${stage.why}</div>
         <a class="resource-link" href="${stage.resource.url}" target="_blank" rel="noopener">📚 ${stage.resource.label} ↗</a>
         <div class="lessons"></div>
+        <div class="project-slot"></div>
         <div class="log">
           <label>📝 Stage notes (where you stopped, questions, wins)</label>
           <textarea placeholder="Type notes for this stage...">${(state["notes:"+stage.id]||"").replace(/</g,"&lt;")}</textarea>
@@ -829,6 +990,38 @@ function render(){
       lessonsEl.appendChild(row);
     });
 
+    // Project challenge card
+    const proj = PROJECTS[stage.id];
+    const popenKey="popen:"+stage.id;
+    const popen=!!state[popenKey];
+    const pbox=document.createElement("div");
+    pbox.className="project"+(projDone?" done":"")+(popen?" popen":"");
+    pbox.id="project-"+stage.id;
+    const pcid="proj-cb-"+stage.id;
+    pbox.innerHTML=`
+      <div class="project-head">
+        <input type="checkbox" id="${pcid}" ${projDone?"checked":""}>
+        <div class="pt"><div class="ptag">🎯 Project Challenge — test your comprehension</div>
+          <div class="pname">${proj.name}</div></div>
+        <div class="pchev">▶</div>
+      </div>
+      <div class="project-content">
+        <p>${proj.brief}</p>
+        <h4>Requirements</h4><ul>${proj.reqs.map(r=>"<li>"+r+"</li>").join("")}</ul>
+        <h4>Stretch goals</h4><ul>${proj.stretch.map(r=>"<li>"+r+"</li>").join("")}</ul>
+        <div class="pass"><b>✅ You've passed when:</b> ${proj.pass}</div>
+      </div>`;
+    const pcb=pbox.querySelector("input");
+    pcb.addEventListener("click",(e)=>e.stopPropagation());
+    pcb.addEventListener("change",(e)=>{ state["proj:"+stage.id]=e.target.checked; saveState(state); render(); });
+    pbox.querySelector(".project-head").addEventListener("click",(e)=>{
+      if(e.target===pcb) return;
+      const nowOpen=!pbox.classList.contains("popen");
+      state[popenKey]=nowOpen; saveState(state);
+      pbox.classList.toggle("popen");
+    });
+    card.querySelector(".project-slot").appendChild(pbox);
+
     const ta=card.querySelector("textarea");
     const savedEl=card.querySelector(".saved");
     let t;
@@ -841,10 +1034,40 @@ function render(){
     stagesEl.appendChild(card);
   });
 
+  // Grand Challenge (counts toward total)
+  const grandDone=!!state["grand"];
+  totalAll+=1; if(grandDone) doneAll+=1;
+  const gopen=!!state["gopen"];
+  const gbox=document.createElement("div");
+  gbox.className="grand"+(gopen?" gopen":"");
+  gbox.id="grand";
+  gbox.innerHTML=`
+    <div class="grand-head">
+      <input type="checkbox" id="grand-cb" ${grandDone?"checked":""}>
+      <div class="gt"><div class="gtag">🏆 Final integration project</div>
+        <h2>${GRAND.name}</h2></div>
+      <div class="gchev">▶</div>
+    </div>
+    <div class="grand-content">
+      <p>${GRAND.brief}</p>
+      <h4>Requirements</h4><ul>${GRAND.reqs.map(r=>"<li>"+r+"</li>").join("")}</ul>
+      <div class="pass"><b>✅ You've passed when:</b> ${GRAND.pass}</div>
+    </div>`;
+  const gcb=gbox.querySelector("input");
+  gcb.addEventListener("click",(e)=>e.stopPropagation());
+  gcb.addEventListener("change",(e)=>{ state["grand"]=e.target.checked; saveState(state); render(); });
+  gbox.querySelector(".grand-head").addEventListener("click",(e)=>{
+    if(e.target===gcb) return;
+    const nowOpen=!gbox.classList.contains("gopen");
+    state["gopen"]=nowOpen; saveState(state);
+    gbox.classList.toggle("gopen");
+  });
+  stagesEl.appendChild(gbox);
+
   const pctAll = totalAll?Math.round(doneAll/totalAll*100):0;
   document.getElementById("overallPct").textContent=pctAll+"%";
   document.getElementById("overallBar").style.width=pctAll+"%";
-  document.getElementById("overallMeta").textContent=doneAll+" of "+totalAll+" lessons done";
+  document.getElementById("overallMeta").textContent=doneAll+" of "+totalAll+" items done";
   document.getElementById("celebrate").classList.toggle("show", pctAll===100);
 }
 
