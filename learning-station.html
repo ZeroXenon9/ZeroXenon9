@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unitree G1 Learning Station</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --green:#3fb950;
+    --amber:#d29922; --purple:#bc8cff; --red:#f85149;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.55;
+    padding:24px 16px 80px;
+  }
+  .wrap{max-width:880px; margin:0 auto;}
+  header{text-align:center; margin-bottom:8px;}
+  header h1{font-size:1.9rem; letter-spacing:.5px;}
+  header h1 .bot{font-size:1.6rem;}
+  header p{color:var(--muted); margin-top:6px;}
+
+  /* Overall progress */
+  .overall{
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; padding:18px 20px; margin:22px 0;
+  }
+  .overall .row{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .overall .pct{font-size:1.4rem; font-weight:700; color:var(--green);}
+  .bar{height:14px; background:var(--panel2); border-radius:8px; overflow:hidden; border:1px solid var(--border);}
+  .bar > span{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--green),var(--accent)); transition:width .4s ease;}
+  .reset{
+    background:transparent; border:1px solid var(--border); color:var(--muted);
+    padding:6px 12px; border-radius:8px; cursor:pointer; font-size:.8rem;
+  }
+  .reset:hover{border-color:var(--red); color:var(--red);}
+
+  /* Stage cards */
+  .stage{
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; margin-bottom:18px; overflow:hidden;
+    border-left:4px solid var(--border); transition:border-color .3s;
+  }
+  .stage.done{border-left-color:var(--green);}
+  .stage.active{border-left-color:var(--accent);}
+  .stage-head{
+    display:flex; align-items:center; gap:14px; padding:16px 20px;
+    cursor:pointer; user-select:none;
+  }
+  .stage-head:hover{background:var(--panel2);}
+  .badge{
+    flex:none; width:42px; height:42px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:1.05rem; background:var(--panel2);
+    border:2px solid var(--border);
+  }
+  .stage.done .badge{background:var(--green); border-color:var(--green); color:#0d1117;}
+  .stage-title{flex:1;}
+  .stage-title h2{font-size:1.15rem;}
+  .stage-title .meta{color:var(--muted); font-size:.82rem; margin-top:2px;}
+  .stage-pct{font-size:.85rem; color:var(--muted); font-variant-numeric:tabular-nums;}
+  .chev{color:var(--muted); transition:transform .25s; font-size:.9rem;}
+  .stage.open .chev{transform:rotate(90deg);}
+
+  .stage-body{display:none; padding:0 20px 18px 20px;}
+  .stage.open .stage-body{display:block;}
+  .why{
+    background:var(--panel2); border-radius:8px; padding:10px 14px;
+    font-size:.88rem; color:var(--muted); margin:6px 0 14px;
+    border-left:3px solid var(--accent);
+  }
+
+  ul.tasks{list-style:none;}
+  ul.tasks li{
+    display:flex; align-items:flex-start; gap:10px; padding:8px 0;
+    border-bottom:1px solid var(--border);
+  }
+  ul.tasks li:last-child{border-bottom:none;}
+  ul.tasks input{
+    appearance:none; -webkit-appearance:none; flex:none;
+    width:20px; height:20px; border:2px solid var(--border); border-radius:5px;
+    margin-top:2px; cursor:pointer; position:relative; background:var(--bg);
+  }
+  ul.tasks input:checked{background:var(--green); border-color:var(--green);}
+  ul.tasks input:checked::after{
+    content:"✓"; color:#0d1117; font-weight:700; font-size:.8rem;
+    position:absolute; top:-1px; left:3px;
+  }
+  ul.tasks label{cursor:pointer; flex:1;}
+  ul.tasks li.checked label{color:var(--muted); text-decoration:line-through;}
+
+  .log{margin-top:14px;}
+  .log label{display:block; font-size:.8rem; color:var(--muted); margin-bottom:6px;}
+  .log textarea{
+    width:100%; min-height:60px; background:var(--bg); color:var(--text);
+    border:1px solid var(--border); border-radius:8px; padding:10px;
+    font-family:inherit; font-size:.88rem; resize:vertical;
+  }
+  .log textarea:focus{outline:none; border-color:var(--accent);}
+  .saved{font-size:.75rem; color:var(--green); margin-top:4px; height:14px;}
+
+  footer{text-align:center; color:var(--muted); font-size:.8rem; margin-top:30px;}
+  .celebrate{
+    text-align:center; padding:14px; border-radius:10px; margin-bottom:18px;
+    background:linear-gradient(90deg,rgba(63,185,80,.15),rgba(88,166,255,.15));
+    border:1px solid var(--green); display:none;
+  }
+  .celebrate.show{display:block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="bot">🤖</span> Unitree G1 Learning Station</h1>
+    <p>Your path from terminal newbie to robot programmer. Check off each session as you go — progress saves automatically.</p>
+  </header>
+
+  <div class="celebrate" id="celebrate">🎉 <strong>All stages complete!</strong> You're ready to drive the G1. Time to build something real.</div>
+
+  <div class="overall">
+    <div class="row">
+      <div>Overall progress</div>
+      <div class="pct" id="overallPct">0%</div>
+    </div>
+    <div class="bar"><span id="overallBar"></span></div>
+    <div class="row" style="margin-top:14px; margin-bottom:0;">
+      <div class="meta" id="overallMeta" style="color:var(--muted); font-size:.82rem;">0 of 0 tasks done</div>
+      <button class="reset" id="resetBtn">Reset all progress</button>
+    </div>
+  </div>
+
+  <div id="stages"></div>
+
+  <footer>Progress is stored locally in this browser. Bookmark this file and return after each session.</footer>
+</div>
+
+<script>
+const ROADMAP = [
+  {
+    id:"wsl", icon:"🐧", title:"WSL Basics", time:"1–2 days",
+    why:"You need this to survive inside the terminal daily. Everything else runs here.",
+    tasks:[
+      "Install WSL and create your Linux user (wsl --install)",
+      "Navigate folders: pwd, ls, cd, mkdir",
+      "Manage files: cp, mv, rm, cat",
+      "Move files between Windows (/mnt/c) and Linux",
+      "Update packages: sudo apt update && sudo apt upgrade",
+      "Comfortable opening a terminal without panic"
+    ]
+  },
+  {
+    id:"python", icon:"🐍", title:"Python", time:"2–4 weeks",
+    why:"Most Unitree examples are Python first. Faster to prototype and test on the robot.",
+    tasks:[
+      "Variables and data types (int, float, str, list, dict)",
+      "Conditionals: if / elif / else",
+      "Loops: for and while",
+      "Functions: define, arguments, return values",
+      "Classes and objects (OOP basics)",
+      "Imports and modules; pip install packages",
+      "Read/write files and handle errors (try/except)",
+      "Write a small script that runs end-to-end"
+    ]
+  },
+  {
+    id:"ros2", icon:"🔗", title:"ROS2", time:"3–5 weeks (alongside Python)",
+    why:"Start ROS2 after you know basic Python — the tutorials use Python heavily.",
+    tasks:[
+      "Understand ROS2 core concepts: nodes and the graph",
+      "Topics: how data flows between nodes",
+      "Write a Publisher node in Python",
+      "Write a Subscriber node in Python",
+      "Services and parameters basics",
+      "Build a package with colcon; use a workspace",
+      "Visualize with rqt_graph and ros2 topic echo",
+      "Run a complete pub/sub example you wrote"
+    ]
+  },
+  {
+    id:"cpp", icon:"⚙️", title:"C++", time:"ongoing (after ROS2 basics)",
+    why:"Needed for low-level motor control and performance. unitree_sdk2 is C++ based. Concepts carry over from Python.",
+    tasks:[
+      "Compile and run a hello-world (g++, the build step)",
+      "Types, variables, and pointers/references",
+      "Functions and headers (.h / .cpp split)",
+      "Classes, constructors, and methods",
+      "Standard library: vector, string, map",
+      "CMake basics: build a small project",
+      "Write a ROS2 C++ node (compare to the Python one)"
+    ]
+  },
+  {
+    id:"g1sdk", icon:"🦿", title:"Unitree G1 SDK", time:"the goal",
+    why:"Everything above leads here. Now you control the robot directly with unitree_sdk2.",
+    tasks:[
+      "Clone and build unitree_sdk2",
+      "Connect to the G1 and read robot state",
+      "Run a provided example (high-level motion)",
+      "Send a basic command to the robot safely",
+      "Understand the control loop and safety limits",
+      "Write your own first control program"
+    ]
+  }
+];
+
+const KEY = "g1-learning-station-v1";
+function loadState(){ try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return {};} }
+function saveState(s){ localStorage.setItem(KEY, JSON.stringify(s)); }
+let state = loadState();
+
+const stagesEl = document.getElementById("stages");
+
+function taskKey(sid, i){ return sid + ":" + i; }
+
+function render(){
+  stagesEl.innerHTML = "";
+  let totalAll = 0, doneAll = 0;
+  let firstIncompleteFound = false;
+
+  ROADMAP.forEach((stage, sIdx) => {
+    const total = stage.tasks.length;
+    let done = 0;
+    stage.tasks.forEach((_,i)=>{ if(state[taskKey(stage.id,i)]) done++; });
+    totalAll += total; doneAll += done;
+    const complete = done === total;
+    const isActive = !complete && !firstIncompleteFound;
+    if(isActive) firstIncompleteFound = true;
+
+    const card = document.createElement("div");
+    card.className = "stage" + (complete?" done":"") + (isActive?" active":"");
+    // open the active stage by default, or one explicitly opened
+    const openKey = "open:"+stage.id;
+    const isOpen = state[openKey] !== undefined ? state[openKey] : isActive;
+    if(isOpen) card.classList.add("open");
+
+    const pct = total ? Math.round(done/total*100) : 0;
+
+    card.innerHTML = `
+      <div class="stage-head">
+        <div class="badge">${complete ? "✓" : stage.icon}</div>
+        <div class="stage-title">
+          <h2>Stage ${sIdx+1}: ${stage.title}</h2>
+          <div class="meta">⏱ ${stage.time}</div>
+        </div>
+        <div class="stage-pct">${done}/${total} · ${pct}%</div>
+        <div class="chev">▶</div>
+      </div>
+      <div class="stage-body">
+        <div class="why">💡 ${stage.why}</div>
+        <ul class="tasks"></ul>
+        <div class="log">
+          <label>📝 Session notes (what you learned, where you stopped)</label>
+          <textarea placeholder="Type notes for this stage...">${(state["notes:"+stage.id]||"").replace(/</g,"&lt;")}</textarea>
+          <div class="saved"></div>
+        </div>
+      </div>`;
+
+    // header toggle
+    card.querySelector(".stage-head").addEventListener("click", ()=>{
+      const nowOpen = !card.classList.contains("open");
+      state[openKey] = nowOpen;
+      saveState(state);
+      card.classList.toggle("open");
+    });
+
+    // tasks
+    const ul = card.querySelector("ul.tasks");
+    stage.tasks.forEach((t,i)=>{
+      const li = document.createElement("li");
+      const checked = !!state[taskKey(stage.id,i)];
+      if(checked) li.classList.add("checked");
+      const id = "cb-"+stage.id+"-"+i;
+      li.innerHTML = `<input type="checkbox" id="${id}" ${checked?"checked":""}><label for="${id}">${t}</label>`;
+      li.querySelector("input").addEventListener("change", (e)=>{
+        state[taskKey(stage.id,i)] = e.target.checked;
+        saveState(state);
+        render();
+      });
+      ul.appendChild(li);
+    });
+
+    // notes autosave
+    const ta = card.querySelector("textarea");
+    const savedEl = card.querySelector(".saved");
+    let t;
+    ta.addEventListener("input", ()=>{
+      state["notes:"+stage.id] = ta.value;
+      saveState(state);
+      savedEl.textContent = "saved ✓";
+      clearTimeout(t); t = setTimeout(()=> savedEl.textContent="", 1200);
+    });
+
+    stagesEl.appendChild(card);
+  });
+
+  const pctAll = totalAll ? Math.round(doneAll/totalAll*100) : 0;
+  document.getElementById("overallPct").textContent = pctAll + "%";
+  document.getElementById("overallBar").style.width = pctAll + "%";
+  document.getElementById("overallMeta").textContent = doneAll + " of " + totalAll + " tasks done";
+  document.getElementById("celebrate").classList.toggle("show", pctAll === 100);
+}
+
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  if(confirm("Reset ALL progress and notes? This cannot be undone.")){
+    state = {}; saveState(state); render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
