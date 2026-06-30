@@ -22,6 +22,8 @@
   header h1{font-size:1.9rem; letter-spacing:.5px;}
   header h1 .bot{font-size:1.6rem;}
   header p{color:var(--muted); margin-top:6px;}
+  .answerkey-link{display:inline-block; margin-top:10px; font-size:.85rem; color:var(--green); text-decoration:none; border:1px solid var(--border); padding:6px 14px; border-radius:20px;}
+  .answerkey-link:hover{border-color:var(--green);}
 
   /* Next-up banner */
   .nextup{
@@ -213,6 +215,7 @@
   <header>
     <h1><span class="bot">🤖</span> Unitree G1 Learning Station</h1>
     <p>From zero experience to intermediate. Click any lesson to read it, do the exercise, then check it off. Everything saves automatically.</p>
+    <a class="answerkey-link" href="try-it-answers.html">🔑 Open the Try-It Answer Key →</a>
   </header>
 
   <div class="celebrate" id="celebrate">🎉 <strong>All stages complete!</strong> You went from terminal newbie to G1 programmer. Time to build something real.</div>
@@ -1035,7 +1038,9 @@ function render(){
         </div>
         <div class="lesson-content">
           ${task.lesson}
-          <div class="try"><b>🛠 Try it:</b> ${task.ex}</div>
+          <div class="try"><b>🛠 Try it:</b> ${task.ex}
+            <div style="margin-top:7px;"><a class="llink" href="try-it-answers.html" style="color:var(--green);">🔑 See the worked solution ↗</a></div>
+          </div>
           <a class="llink" href="${task.link.url}" target="_blank" rel="noopener">🔗 ${task.link.label} ↗</a>
         </div>`;
 

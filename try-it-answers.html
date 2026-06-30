@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Try-It Answer Key — G1 Learning Station</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --green:#3fb950;
+    --amber:#d29922; --purple:#bc8cff; --code:#0b0f14;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.55; padding:24px 16px 80px;}
+  .wrap{max-width:880px; margin:0 auto;}
+  header{text-align:center; margin-bottom:6px;}
+  header h1{font-size:1.7rem;}
+  header p{color:var(--muted); margin-top:6px; font-size:.92rem;}
+  .back{display:inline-block; margin:14px 0 4px; color:var(--accent); text-decoration:none; font-size:.85rem;}
+  .back:hover{text-decoration:underline;}
+  .note{background:var(--panel2); border-left:3px solid var(--amber); border-radius:8px; padding:10px 14px; font-size:.85rem; color:var(--muted); margin:14px 0 22px;}
+
+  .stage{background:var(--panel); border:1px solid var(--border); border-radius:12px; margin-bottom:20px; overflow:hidden; border-left:4px solid var(--accent);}
+  .stage h2{font-size:1.15rem; padding:15px 20px; background:var(--panel2); display:flex; align-items:center; gap:10px;}
+  .stage-body{padding:6px 20px 14px;}
+
+  .item{border-bottom:1px solid var(--border); padding:14px 0;}
+  .item:last-child{border-bottom:none;}
+  .q{font-weight:500; margin-bottom:8px;}
+  .q .qnum{color:var(--accent); font-weight:700; margin-right:6px;}
+  .toggle{background:transparent; border:1px solid var(--border); color:var(--green); padding:5px 12px; border-radius:7px; cursor:pointer; font-size:.82rem;}
+  .toggle:hover{border-color:var(--green);}
+  .sol{display:none; margin-top:12px; padding-left:4px; border-left:2px solid rgba(63,185,80,.3);}
+  .sol.show{display:block;}
+  .sol h4{font-size:.72rem; text-transform:uppercase; letter-spacing:.5px; color:var(--green); margin:10px 0 5px;}
+  .sol p{margin:6px 0; font-size:.92rem;}
+  pre{background:var(--code); border:1px solid var(--border); border-radius:7px; padding:12px 14px; overflow-x:auto; margin:8px 0; font-size:.84rem; line-height:1.5;}
+  code{font-family:"SF Mono",Consolas,Monaco,monospace;}
+  p code,li code{background:var(--panel2); padding:1px 5px; border-radius:4px; font-size:.85em; color:var(--purple);}
+  .out{color:var(--muted);}
+
+  .controls{text-align:center; margin:18px 0;}
+  .controls button{background:var(--panel); border:1px solid var(--border); color:var(--text); padding:7px 14px; border-radius:8px; cursor:pointer; font-size:.84rem; margin:0 4px;}
+  .controls button:hover{border-color:var(--accent);}
+  footer{text-align:center; color:var(--muted); font-size:.8rem; margin-top:30px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🔑 Try-It Answer Key</h1>
+    <p>Worked solutions for every "Try it" exercise. Attempt it yourself first — then reveal the answer to check.</p>
+    <a class="back" href="learning-station.html">← Back to the Learning Station</a>
+  </header>
+
+  <div class="note">⚠️ These are <b>model answers</b> — there's often more than one correct way. The G1 SDK exercises depend on your specific robot and firmware, so treat those as guidance and always confirm against the official README and safety docs.</div>
+
+  <div class="controls">
+    <button id="expandAll">Reveal all</button>
+    <button id="collapseAll">Hide all</button>
+  </div>
+
+  <div id="content"></div>
+
+  <footer><a class="back" href="learning-station.html">← Back to the Learning Station</a></footer>
+</div>
+
+<script>
+const ANSWERS = [
+{ icon:"🐧", title:"Stage 1 — WSL Basics", items:[
+  { q:`Open your Ubuntu terminal and run <code>whoami</code> — it should print your Linux username.`,
+    sol:`<pre><code>whoami
+<span class="out"># → ivan   (whatever name you chose at install)</span></code></pre>
+    <p>This confirms which Linux user you're logged in as. It's separate from your Windows username.</p>` },
+  { q:`Create a folder <code>robotics</code> in your home, <code>cd</code> into it, and confirm with <code>pwd</code>.`,
+    sol:`<pre><code>mkdir ~/robotics
+cd ~/robotics
+pwd
+<span class="out"># → /home/ivan/robotics</span></code></pre>
+    <p>Or chain it in one line: <code>mkdir ~/robotics && cd ~/robotics && pwd</code></p>` },
+  { q:`Make a file with your name in it using <code>echo</code>, print it with <code>cat</code>, copy it, then delete the copy.`,
+    sol:`<pre><code>echo "Ivan How" &gt; name.txt   <span class="out"># create + write</span>
+cat name.txt                 <span class="out"># Ivan How</span>
+cp name.txt name-copy.txt    <span class="out"># copy</span>
+rm name-copy.txt             <span class="out"># delete the copy</span>
+ls                           <span class="out"># only name.txt remains</span></code></pre>` },
+  { q:`Copy a file from your Linux home to your Windows Desktop, then open it in Explorer with <code>explorer.exe .</code>`,
+    sol:`<pre><code>cp ~/name.txt /mnt/c/Users/YourName/Desktop/
+cd /mnt/c/Users/YourName/Desktop
+explorer.exe .</code></pre>
+    <p>Replace <code>YourName</code> with your Windows username — run <code>ls /mnt/c/Users</code> if you're not sure what it is.</p>` },
+  { q:`Run the update+upgrade combo, then install <code>tree</code> and run it inside any folder.`,
+    sol:`<pre><code>sudo apt update && sudo apt upgrade -y
+sudo apt install tree -y
+tree</code></pre>
+    <p><code>tree</code> draws your folder structure as a branching diagram — handy for seeing a project at a glance.</p>` },
+  { q:`Install git, set your name/email, then create a folder, <code>git init</code> it, and make your first commit.`,
+    sol:`<pre><code>sudo apt install git -y
+git config --global user.name "Ivan How"
+git config --global user.email "ivanhowmk12@gmail.com"
+
+mkdir ~/first-repo && cd ~/first-repo
+git init
+echo "# My project" &gt; README.md
+git add README.md
+git commit -m "First commit"
+git log   <span class="out"># shows your commit</span></code></pre>` },
+  { q:`Without looking it up: go home, make a folder, enter it, create a file, list it, and delete it — all from memory.`,
+    sol:`<pre><code>cd              <span class="out"># home</span>
+mkdir test
+cd test
+touch file.txt  <span class="out"># or: echo "" &gt; file.txt</span>
+ls              <span class="out"># file.txt</span>
+rm file.txt</code></pre>
+    <p><code>touch</code> creates an empty file. If these flow without thinking, you've got the terminal basics down.</p>` }
+]},
+{ icon:"🐍", title:"Stage 2 — Python", items:[
+  { q:`Make variables for your name, age, and a list of 3 hobbies. Print them.`,
+    sol:`<pre><code>name = "Ivan"
+age = 21
+hobbies = ["chess", "coding", "robotics"]
+print(name, age, hobbies)</code></pre>` },
+  { q:`Write a program that reads a number and prints whether it's positive, negative, or zero.`,
+    sol:`<pre><code>num = float(input("Enter a number: "))
+if num &gt; 0:
+    print("positive")
+elif num &lt; 0:
+    print("negative")
+else:
+    print("zero")</code></pre>
+    <p><code>float()</code> turns the typed text into a number so you can compare it.</p>` },
+  { q:`Use a <code>for</code> loop to print the squares of numbers 1 through 10.`,
+    sol:`<pre><code>for n in range(1, 11):   <span class="out"># 1..10 (11 is excluded)</span>
+    print(n, "squared is", n * n)</code></pre>` },
+  { q:`Write a function <code>area(width, height)</code> that returns width × height, and call it with a few values.`,
+    sol:`<pre><code>def area(width, height):
+    return width * height
+
+print(area(3, 4))   <span class="out"># 12</span>
+print(area(5, 2))   <span class="out"># 10</span></code></pre>` },
+  { q:`Make a <code>Dog</code> class with a name and a <code>bark()</code> method. Create two dogs and make them bark.`,
+    sol:`<pre><code>class Dog:
+    def __init__(self, name):
+        self.name = name
+    def bark(self):
+        print(self.name + " says woof!")
+
+d1 = Dog("Rex")
+d2 = Dog("Bella")
+d1.bark()   <span class="out"># Rex says woof!</span>
+d2.bark()   <span class="out"># Bella says woof!</span></code></pre>` },
+  { q:`Install <code>numpy</code> with pip, then use it to create an array and print its sum.`,
+    sol:`<p>In the terminal:</p><pre><code>pip3 install numpy</code></pre>
+    <p>In Python:</p><pre><code>import numpy as np
+arr = np.array([10, 20, 30, 40])
+print(arr.sum())   <span class="out"># 100</span></code></pre>` },
+  { q:`Write 3 lines to a file, read them back, then wrap a risky <code>int()</code> call in try/except.`,
+    sol:`<pre><code>with open("notes.txt", "w") as f:
+    f.write("line 1\\n")
+    f.write("line 2\\n")
+    f.write("line 3\\n")
+
+with open("notes.txt") as f:
+    print(f.read())
+
+try:
+    n = int("oops")
+except ValueError:
+    print("Not a number — handled safely")</code></pre>
+    <p><code>\\n</code> is a newline. <code>try/except</code> catches the error so the program keeps running.</p>` },
+  { q:`Build the battery tracker (or your own idea) end-to-end. Confirm the log file is written correctly.`,
+    sol:`<pre><code>class Battery:
+    def __init__(self, level):
+        self.level = level
+    def drain(self, amount):
+        self.level = max(0, self.level - amount)
+
+bat = Battery(100)
+with open("battery_log.txt", "w") as f:
+    for step in range(5):
+        bat.drain(15)
+        line = f"step {step}: {bat.level}%"
+        print(line)
+        f.write(line + "\\n")</code></pre>
+    <p>Expected output: 85%, 70%, 55%, 40%, 25%. Open <code>battery_log.txt</code> with <code>cat battery_log.txt</code> to confirm the same lines were saved.</p>` }
+]},
+{ icon:"🔗", title:"Stage 3 — ROS2", items:[
+  { q:`Run the talker and listener demo in two terminals and watch them communicate. Then run <code>ros2 node list</code>.`,
+    sol:`<p>Source ROS2 in <b>every</b> new terminal first.</p>
+    <pre><code><span class="out"># terminal 1</span>
+source /opt/ros/jazzy/setup.bash
+ros2 run demo_nodes_cpp talker
+
+<span class="out"># terminal 2</span>
+source /opt/ros/jazzy/setup.bash
+ros2 run demo_nodes_py listener
+
+<span class="out"># terminal 3</span>
+ros2 node list
+<span class="out"># → /talker  /listener</span></code></pre>` },
+  { q:`With the talker running, list topics, then <code>echo</code> the chatter topic to watch messages stream by.`,
+    sol:`<pre><code>ros2 topic list           <span class="out"># /chatter appears in the list</span>
+ros2 topic echo /chatter
+<span class="out"># → data: 'Hello World: 1'  (then 2, 3, ...)</span></code></pre>` },
+  { q:`Type out this publisher, run it, and confirm with <code>ros2 topic echo /chatter</code> in another terminal.`,
+    sol:`<p>Save as <code>talker.py</code>:</p>
+    <pre><code>import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+class Talker(Node):
+    def __init__(self):
+        super().__init__("talker")
+        self.pub = self.create_publisher(String, "chatter", 10)
+        self.create_timer(1.0, self.tick)
+    def tick(self):
+        msg = String()
+        msg.data = "hello from Ivan"
+        self.pub.publish(msg)
+
+def main():
+    rclpy.init()
+    rclpy.spin(Talker())
+
+if __name__ == "__main__":
+    main()</code></pre>
+    <pre><code>python3 talker.py                 <span class="out"># terminal 1</span>
+ros2 topic echo /chatter          <span class="out"># terminal 2 → "hello from Ivan"</span></code></pre>` },
+  { q:`Run your publisher and this subscriber together. Confirm the listener logs each message.`,
+    sol:`<p>Save the subscriber as <code>listener.py</code> (from the lesson), then:</p>
+    <pre><code>python3 talker.py      <span class="out"># terminal 1</span>
+python3 listener.py    <span class="out"># terminal 2 → [INFO] Got: hello from Ivan</span></code></pre>
+    <p>The listener's callback fires once per message the talker publishes.</p>` },
+  { q:`List services and parameters in a running demo, and call one service from the command line.`,
+    sol:`<pre><code><span class="out"># terminal 1: start a node that offers a service</span>
+ros2 run demo_nodes_cpp add_two_ints_server
+
+<span class="out"># terminal 2</span>
+ros2 service list
+ros2 service call /add_two_ints example_interfaces/srv/AddTwoInts "{a: 2, b: 3}"
+<span class="out"># → response: sum=5</span>
+ros2 param list</code></pre>` },
+  { q:`Create a workspace and package, move your publisher into it, build with colcon, and run it via <code>ros2 run</code>.`,
+    sol:`<pre><code>mkdir -p ~/ros2_ws/src && cd ~/ros2_ws/src
+ros2 pkg create --build-type ament_python my_pkg
+
+<span class="out"># put talker.py at ~/ros2_ws/src/my_pkg/my_pkg/talker.py</span>
+<span class="out"># in setup.py, add under entry_points -> console_scripts:</span>
+<span class="out">#   'talker = my_pkg.talker:main',</span>
+
+cd ~/ros2_ws
+colcon build
+source install/setup.bash
+ros2 run my_pkg talker</code></pre>` },
+  { q:`Run your publisher + subscriber, open <code>rqt_graph</code>, and find your two nodes connected by the topic.`,
+    sol:`<pre><code>python3 talker.py     <span class="out"># or: ros2 run my_pkg talker</span>
+python3 listener.py
+rqt_graph</code></pre>
+    <p>You should see <code>/talker → /chatter → /listener</code>. If nodes don't appear, click the refresh (↻) icon in rqt_graph's top-left.</p>` },
+  { q:`Build and run the full sensor→reactor system in your own package. Confirm it works end-to-end.`,
+    sol:`<p>Sensor node — publishes a random distance each second:</p>
+    <pre><code>import rclpy, random
+from rclpy.node import Node
+from std_msgs.msg import Float32
+
+class Sensor(Node):
+    def __init__(self):
+        super().__init__("sensor")
+        self.pub = self.create_publisher(Float32, "distance", 10)
+        self.create_timer(1.0, self.tick)
+    def tick(self):
+        m = Float32(); m.data = random.uniform(0, 100)
+        self.pub.publish(m)
+        self.get_logger().info(f"distance {m.data:.0f}")
+
+def main(): rclpy.init(); rclpy.spin(Sensor())
+if __name__ == "__main__": main()</code></pre>
+    <p>Reactor node — warns when the value is too close:</p>
+    <pre><code>import rclpy
+from rclpy.node import Node
+from std_msgs.msg import Float32
+
+class Reactor(Node):
+    def __init__(self):
+        super().__init__("reactor")
+        self.create_subscription(Float32, "distance", self.on_dist, 10)
+    def on_dist(self, msg):
+        if msg.data &lt; 20:
+            self.get_logger().warn("STOP — obstacle close!")
+        else:
+            self.get_logger().info("GO")
+
+def main(): rclpy.init(); rclpy.spin(Reactor())
+if __name__ == "__main__": main()</code></pre>
+    <p>Register both in <code>setup.py</code>, <code>colcon build</code>, then run each with <code>ros2 run</code>. Watch the reactor switch between GO and STOP as the random distance crosses 20.</p>` }
+]},
+{ icon:"⚙️", title:"Stage 4 — C++", items:[
+  { q:`Install build-essential, write hello.cpp, compile it, and run the binary.`,
+    sol:`<pre><code>sudo apt install build-essential -y</code></pre>
+    <p><code>hello.cpp</code>:</p>
+    <pre><code>#include &lt;iostream&gt;
+int main() {
+    std::cout &lt;&lt; "Hello, C++!" &lt;&lt; std::endl;
+    return 0;
+}</code></pre>
+    <pre><code>g++ hello.cpp -o hello
+./hello   <span class="out"># Hello, C++!</span></code></pre>` },
+  { q:`Make an int, a pointer to it, and a reference. Change the value through each and print it.`,
+    sol:`<pre><code>#include &lt;iostream&gt;
+int main() {
+    int age = 21;
+    int* p = &amp;age;      <span class="out">// pointer holds age's address</span>
+    int&amp; ref = age;     <span class="out">// ref is another name for age</span>
+
+    *p = 25;            <span class="out">// change via pointer</span>
+    std::cout &lt;&lt; age &lt;&lt; "\\n";   <span class="out">// 25</span>
+
+    ref = 30;           <span class="out">// change via reference</span>
+    std::cout &lt;&lt; age &lt;&lt; "\\n";   <span class="out">// 30</span>
+}</code></pre>` },
+  { q:`Split an <code>add</code> and <code>multiply</code> function into math.h/math.cpp, use them from main.cpp, and compile.`,
+    sol:`<p><code>math.h</code>:</p><pre><code>int add(int a, int b);
+int multiply(int a, int b);</code></pre>
+    <p><code>math.cpp</code>:</p><pre><code>#include "math.h"
+int add(int a, int b) { return a + b; }
+int multiply(int a, int b) { return a * b; }</code></pre>
+    <p><code>main.cpp</code>:</p><pre><code>#include &lt;iostream&gt;
+#include "math.h"
+int main() {
+    std::cout &lt;&lt; add(2, 3) &lt;&lt; "\\n";       <span class="out">// 5</span>
+    std::cout &lt;&lt; multiply(4, 5) &lt;&lt; "\\n";  <span class="out">// 20</span>
+}</code></pre>
+    <pre><code>g++ main.cpp math.cpp -o app && ./app</code></pre>` },
+  { q:`Write a <code>Counter</code> class with a private count, an <code>increment()</code> method, and a <code>get()</code> method.`,
+    sol:`<pre><code>#include &lt;iostream&gt;
+class Counter {
+public:
+    void increment() { count_++; }
+    int get() { return count_; }
+private:
+    int count_ = 0;
+};
+int main() {
+    Counter c;
+    c.increment();
+    c.increment();
+    std::cout &lt;&lt; c.get() &lt;&lt; "\\n";   <span class="out">// 2</span>
+}</code></pre>
+    <p>Because <code>count_</code> is <code>private</code>, it can only change through <code>increment()</code> — that's encapsulation.</p>` },
+  { q:`Make a vector of 5 numbers, loop over it to compute the sum, and store the result in a map.`,
+    sol:`<pre><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+int main() {
+    std::vector&lt;int&gt; nums = {10, 20, 30, 40, 50};
+    int sum = 0;
+    for (int n : nums) sum += n;
+
+    std::map&lt;std::string, int&gt; result;
+    result["sum"] = sum;
+    std::cout &lt;&lt; result["sum"] &lt;&lt; "\\n";   <span class="out">// 150</span>
+}</code></pre>` },
+  { q:`Take your multi-file project from the headers lesson and build it with a CMakeLists.txt instead of calling g++ directly.`,
+    sol:`<p><code>CMakeLists.txt</code> (in the same folder as your .cpp files):</p>
+    <pre><code>cmake_minimum_required(VERSION 3.10)
+project(MyApp)
+add_executable(app main.cpp math.cpp)</code></pre>
+    <pre><code>mkdir build && cd build
+cmake ..
+make
+./app</code></pre>
+    <p>CMake figures out the compile commands for you — exactly how the SDK is built.</p>` },
+  { q:`Build and run this C++ publisher in a colcon package, and verify with <code>ros2 topic echo /chatter</code>.`,
+    sol:`<pre><code>cd ~/ros2_ws/src
+ros2 pkg create --build-type ament_cmake my_cpp_pkg \\
+  --dependencies rclcpp std_msgs
+<span class="out"># put talker.cpp in my_cpp_pkg/src/</span></code></pre>
+    <p>Add to <code>my_cpp_pkg/CMakeLists.txt</code>:</p>
+    <pre><code>find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+add_executable(talker src/talker.cpp)
+ament_target_dependencies(talker rclcpp std_msgs)
+install(TARGETS talker DESTINATION lib/\${PROJECT_NAME})</code></pre>
+    <pre><code>cd ~/ros2_ws && colcon build
+source install/setup.bash
+ros2 run my_cpp_pkg talker
+ros2 topic echo /chatter   <span class="out"># → "hi from C++"</span></code></pre>` }
+]},
+{ icon:"🦿", title:"Stage 5 — Unitree G1 SDK", items:[
+  { q:`Clone the SDK and build it successfully. Resolve any missing-dependency errors using apt.`,
+    sol:`<pre><code>cd ~
+git clone https://github.com/unitreerobotics/unitree_sdk2.git
+cd unitree_sdk2
+mkdir build && cd build
+cmake ..
+make</code></pre>
+    <p>If <code>cmake</code> or <code>make</code> stops with an error, <b>read the message</b> — it almost always names a missing package. Install it with <code>sudo apt install &lt;package&gt;</code> (the repo README lists the exact dependencies) and re-run. Success = the build finishes and example binaries appear inside <code>build/</code>.</p>` },
+  { q:`Connect to the G1, run a state-reading example, and watch real sensor values stream in.`,
+    sol:`<p>Guidance (hardware-specific):</p>
+    <ul>
+      <li>Plug in the Ethernet cable and set your PC's IP to the same subnet as the robot (address is in the README).</li>
+      <li>From <code>build/</code>, run a <b>read-only</b> state example (one that prints low/high state — it doesn't move the robot).</li>
+      <li>Success = joint positions, IMU, and battery values print and <b>change</b> as you gently move the robot by hand.</li>
+    </ul>
+    <p><b>Safety:</b> robot on a stand or hoisted. Read before you write — always.</p>` },
+  { q:`Run one official high-level example and watch the robot respond. Note exactly which function sends the command.`,
+    sol:`<p>Guidance:</p>
+    <ul>
+      <li>Pick a high-level locomotion example from <code>example/</code> (high-level = whole-body commands; the robot keeps its own balance).</li>
+      <li>Read the code first and find: (1) where it connects/initializes, (2) the line that actually sends the motion command.</li>
+      <li>Model answer: the command is typically sent by calling a method on a high-level client object (e.g. a <code>Move</code>/<code>SetVelocity</code>-style call). Write down its exact name in <i>your</i> SDK version.</li>
+      <li>Run with the robot supported and your hand on the e-stop.</li>
+    </ul>` },
+  { q:`Modify an example to send one small, safe command of your own and observe the robot execute it.`,
+    sol:`<p>Guidance:</p>
+    <ul>
+      <li>Copy a working example so the connection/boilerplate is already correct.</li>
+      <li>Change <b>one</b> thing — a small target well within the documented limits (e.g. a gentle, slow posture shift).</li>
+      <li>Send it inside a controlled loop; keep the magnitude tiny on the first run.</li>
+      <li>Stay next to the emergency stop the entire time, robot supported.</li>
+    </ul>
+    <p>This is your Python/ROS2/C++ skills turning into real, deliberate motion.</p>` },
+  { q:`In an example, find the control loop and its rate, and locate where joint/torque limits are enforced. Write notes on each.`,
+    sol:`<p>Model answer — what to look for:</p>
+    <ul>
+      <li><b>The loop:</b> a <code>while</code> loop that repeats read → compute → send. It usually holds a fixed frequency with a sleep/timer (e.g. running at a few hundred Hz for low-level control).</li>
+      <li><b>The rate:</b> note the sleep interval or declared frequency — late/irregular commands make the robot unstable.</li>
+      <li><b>The limits:</b> constants or <code>clamp</code>/min-max calls that cap joint angle, velocity, and torque before a command is sent.</li>
+      <li>Write a short note for each: what the rate is, and where each limit is enforced.</li>
+    </ul>` },
+  { q:`Design, build, and safely run an original sense→decide→act program on the G1. Commit it to a git repo.`,
+    sol:`<p>Structure your program like this:</p>
+    <pre><code>connect to robot
+loop (at a steady rate):
+    state   = read robot state          <span class="out"># SENSE</span>
+    action  = your_logic(state)          <span class="out"># DECIDE</span>
+    action  = clamp(action, limits)      <span class="out"># stay safe</span>
+    send(action)                         <span class="out"># ACT</span>
+    (emergency stop always available)</code></pre>
+    <p>Keep the behavior small and safe (e.g. respond to a tilt or a joint reading). Then version it:</p>
+    <pre><code>git init
+git add .
+git commit -m "My first G1 behavior"</code></pre>
+    <p>Push to GitHub. The exact API calls depend on your SDK version — confirm against the README and examples. If a stranger could clone it, read your README, and run it safely, you've hit intermediate.</p>` }
+]}
+];
+
+const content = document.getElementById("content");
+ANSWERS.forEach((stage)=>{
+  const card = document.createElement("div");
+  card.className = "stage";
+  card.innerHTML = `<h2>${stage.icon} ${stage.title}</h2><div class="stage-body"></div>`;
+  const body = card.querySelector(".stage-body");
+  stage.items.forEach((item, i)=>{
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <div class="q"><span class="qnum">${i+1}.</span>${item.q}</div>
+      <button class="toggle">🔑 Show solution</button>
+      <div class="sol">${item.sol}</div>`;
+    const btn = div.querySelector(".toggle");
+    const sol = div.querySelector(".sol");
+    btn.addEventListener("click", ()=>{
+      const showing = sol.classList.toggle("show");
+      btn.textContent = showing ? "🙈 Hide solution" : "🔑 Show solution";
+    });
+    body.appendChild(div);
+  });
+  content.appendChild(card);
+});
+
+document.getElementById("expandAll").addEventListener("click", ()=>{
+  document.querySelectorAll(".sol").forEach(s=>s.classList.add("show"));
+  document.querySelectorAll(".toggle").forEach(b=>b.textContent="🙈 Hide solution");
+});
+document.getElementById("collapseAll").addEventListener("click", ()=>{
+  document.querySelectorAll(".sol").forEach(s=>s.classList.remove("show"));
+  document.querySelectorAll(".toggle").forEach(b=>b.textContent="🔑 Show solution");
+});
+</script>
+</body>
+</html>
