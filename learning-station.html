@@ -159,14 +159,15 @@
 
 <script>
 /* ============================ CONTENT ============================ */
-const STAGE_ORDER=[["wsl","WSL"],["python","Python"],["ros2","ROS2"],["cpp","C++"],["g1sdk","G1 SDK"]];
+const STAGE_ORDER=[["wsl","WSL"],["python","Python"],["ros2","ROS2"],["cpp","C++"],["aiml","AI/ML"],["g1sdk","G1 SDK"]];
 
 const OVERVIEWS={
   wsl:{why:"Every tool you'll touch — Python, ROS2, the C++ compiler, the Unitree SDK — runs in a Linux terminal. Before you can build anything, you need to move around your workshop without thinking about it.",connect:"There's no robotics here yet, and that's the point. The <code>git clone</code> and folder navigation you practice now are the <i>exact</i> moves you'll use to download the G1 SDK in the final chapter.",ready:"You can open a terminal, manage files, move data between Windows and Linux, and version code with git — the literacy every robotics tutorial assumes you already have."},
   python:{why:"Robotics is 'make the machine do what you mean.' Python is the fastest way to express that, and it's the language Unitree's examples reach for first.",connect:"You learn to think in code here. A ROS2 node is a class; a robot in the SDK is an object. The 'sense → decide → act' logic you'll run on the G1 is just an if-statement inside a loop — built right here.",ready:"You can write a real program from scratch: read data, make decisions, organize code into classes, and save results."},
   ros2:{why:"A real robot isn't one giant program — it's many small programs talking to each other. ROS2 is the standard that lets them communicate.",connect:"The publisher/subscriber pattern you build is <i>literally</i> how the G1 SDK sends commands and reads state (same DDS messaging). Learn it alongside Python.",ready:"You can design a multi-node sense→decide→act system, build it into a package, and watch it run."},
   cpp:{why:"Low-level motor control needs the speed of compiled C++. And <code>unitree_sdk2</code>, the library that controls the G1, is written in C++.",connect:"Everything from Python carries over — variables, loops, classes — with stricter syntax and a compile step. The bridge from 'I can prototype' to 'I can ship control code.'",ready:"You can compile a multi-file project with CMake (the SDK's build system) and write a C++ ROS2 node."},
-  g1sdk:{why:"The destination. You connect to a real humanoid, read its sensors, and command its motors with <code>unitree_sdk2</code>.",connect:"It all converges: <code>git clone</code> (WSL), build with CMake (C++), read state + send commands with pub/sub (ROS2), structure logic as sense→decide→act (Python).",ready:"You can connect to the G1, read live state, send safe commands in a control loop, and write your own behavior — i.e. start real projects."}
+  aiml:{why:"Modern humanoid robotics is inseparable from AI — VLAs, LLMs, and local inference tools define where the field is heading and what the G1 will eventually be capable of.",connect:"Your ROS2 pub/sub graph can pipe camera frames into a VLA and receive action commands back. llama.cpp can parse natural language instructions and pass structured goals to the G1 SDK. UniFolm-VLA is built specifically for Unitree humanoids — it plugs directly into the SDK you already learned.",ready:"You can clearly explain VLA vs VLM vs LLM, describe how LeRobot and UniFolm-VLA fit into a G1 workflow, and understand what llama.cpp enables for on-device AI in real-time robot control."},
+  g1sdk:{why:"The destination. You connect to a real humanoid, read its sensors, and command its motors with <code>unitree_sdk2</code>.",connect:"It all converges: <code>git clone</code> (WSL), build with CMake (C++), read state + send commands with pub/sub (ROS2), structure logic as sense→decide→act (Python), and optionally pipe a VLA or LLM output as the 'decide' step (AI/ML).",ready:"You can connect to the G1, read live state, send safe commands in a control loop, and write your own behavior — i.e. start real projects."}
 };
 
 /* Each lesson: t(title), model, steps[{say,cmd,out}], trip, ref[[a,b]], mastery, sol, link */
@@ -177,7 +178,7 @@ const ROADMAP=[
   {t:"Install WSL and create your Linux user",
    model:"WSL drops a real Linux computer inside your Windows machine — no second PC, no dual-boot. One command sets it all up.",
    steps:[
-    {say:"Open <b>PowerShell as Administrator</b> (Win → type PowerShell → right-click → Run as administrator), then install everything with one command.",cmd:"wsl --install",out:"Downloads the Linux kernel + Ubuntu, then asks you to restart."},
+    {say:"Open <b>PowerShell as Administrator</b> (Win → type PowerShell → right-click → Run as administrator), then install WSL with <b>Ubuntu 22.04 LTS</b>. This specific version is required for ROS2 Humble.",cmd:"wsl --install -d Ubuntu-22.04",out:"Downloads the Linux kernel + Ubuntu 22.04 LTS, then asks you to restart."},
     {say:"Restart your PC. Ubuntu opens on its own and asks for a username and password (the password stays invisible as you type — that's normal).",cmd:"",out:""},
     {say:"Check it landed on the fast version.",cmd:"wsl --status",out:"Should say <b>Default Version: 2</b>."}
    ],
@@ -450,29 +451,47 @@ with open("battery_log.txt", "w") as f:
    link:{label:"Python tutorial index",url:"https://docs.python.org/3/tutorial/"}}
  ]},
 
-{id:"ros2",icon:"🔗",title:"ROS2",time:"3–5 weeks (alongside Python)",why:"Start after basic Python — the tutorials use Python heavily. This is how robot software talks to itself.",
- resource:{label:"ROS2 official tutorials",url:"https://docs.ros.org/en/jazzy/Tutorials.html"},
+{id:"ros2",icon:"🔗",title:"ROS2 Humble",time:"3–5 weeks (alongside Python)",why:"Start after basic Python — the tutorials use Python heavily. This is how robot software talks to itself.",
+ resource:{label:"ROS2 Humble installation guide",url:"https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html"},
  tasks:[
+  {t:"Install ROS2 Humble on Ubuntu 22.04",
+   model:"ROS2 Humble Hawksbill is the Long-Term Support (LTS) release that targets Ubuntu 22.04 exactly. It receives security updates until 2027. The install process adds the ROS2 apt repository to Ubuntu, then installs the full desktop suite.",
+   steps:[
+    {say:"Set your locale (Humble requires UTF-8).",cmd:"sudo apt update && sudo apt install -y locales\nsudo locale-gen en_US en_US.UTF-8\nsudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8\nexport LANG=en_US.UTF-8",out:"No errors = locale is set."},
+    {say:"Add the ROS2 apt repository and its signing key.",cmd:"sudo apt install -y software-properties-common curl\nsudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \\\n  -o /usr/share/keyrings/ros-archive-keyring.gpg\necho \"deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \\\n  http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main\" \\\n  | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null",out:"Adds the official ROS2 package source."},
+    {say:"Install ROS2 Humble Desktop (includes rviz, rqt, demo nodes).",cmd:"sudo apt update\nsudo apt upgrade -y\nsudo apt install -y ros-humble-desktop",out:"Large download (~500 MB). Takes a few minutes."},
+    {say:"Source the setup file and verify.",cmd:"source /opt/ros/humble/setup.bash\nros2 run demo_nodes_cpp talker",out:"→ Publishing: 'Hello World: 1' … confirms it works."},
+    {say:"Add the source line to your <code>~/.bashrc</code> so it loads in every new terminal.",cmd:"echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc\nsource ~/.bashrc",out:"From now on, any new terminal has ROS2 ready."}
+   ],
+   trip:"If <code>ros2: command not found</code> appears, you opened a new terminal and forgot to source. After adding to <code>~/.bashrc</code> in step 5 that's automatic. If the apt key step fails, check your internet connection — WSL shares Windows networking, so confirm a browser works first.",
+   ref:[["source /opt/ros/humble/setup.bash","Load ROS2 (every terminal, or add to .bashrc)"],["ros2 --version","Confirm install succeeded"],["sudo apt install ros-humble-<pkg>","Add extra ROS2 packages"],["~/.bashrc","Shell startup file — edits take effect in new terminals"]],
+   mastery:"Install ROS2 Humble, add the source line to <code>~/.bashrc</code>, open a fresh terminal, and run the talker demo successfully.",
+   sol:`<pre><code><span class="out"># Steps 1–5 above, then open a fresh terminal:</span>
+ros2 run demo_nodes_cpp talker
+<span class="out"># → Publishing: 'Hello World: 1' (every second)</span>
+<span class="out"># Ctrl+C to stop</span></code></pre><p>If it works in a fresh terminal without manually sourcing, the .bashrc line is set correctly.</p>`,
+   link:{label:"ROS2 Humble install (official)",url:"https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html"}},
+
   {t:"Concepts: nodes and the graph",
    model:"A robot's software is a team of small programs called <b>nodes</b>, each with one job (read camera, balance, drive a motor). Together they form the <b>graph</b>. They cooperate without knowing each other directly.",
    steps:[
-    {say:"Load ROS2 into your terminal. You do this in EVERY new terminal.",cmd:"source /opt/ros/jazzy/setup.bash",out:"No output = loaded."},
+    {say:"Load ROS2 into your terminal. You do this in EVERY new terminal.",cmd:"source /opt/ros/humble/setup.bash",out:"No output = loaded."},
     {say:"Run a demo node that publishes messages.",cmd:"ros2 run demo_nodes_cpp talker",out:"→ Publishing: 'Hello World: 1' …"},
     {say:"In a SECOND terminal (source again), run a node that receives them.",cmd:"ros2 run demo_nodes_py listener",out:"→ I heard: 'Hello World: 1' …"},
     {say:"In a third terminal, list what's running.",cmd:"ros2 node list",out:"→ /talker  /listener"}
    ],
-   trip:"The #1 ROS2 beginner mistake: forgetting to <code>source /opt/ros/jazzy/setup.bash</code> in each new terminal. If <code>ros2: command not found</code> appears, that's it — source it and try again. (Tip: add that line to your <code>~/.bashrc</code> so it runs automatically.)",
+   trip:"The #1 ROS2 beginner mistake: forgetting to <code>source /opt/ros/humble/setup.bash</code> in each new terminal. If <code>ros2: command not found</code> appears, that's it — source it and try again. (Tip: add that line to your <code>~/.bashrc</code> so it runs automatically.)",
    ref:[["source .../setup.bash","Load ROS2 (every terminal)"],["ros2 run pkg node","Run a node"],["ros2 node list","List running nodes"]],
    mastery:"Run the talker and listener demo in two terminals and watch them communicate. Then run <code>ros2 node list</code>.",
    sol:`<pre><code><span class="out"># terminal 1</span>
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/humble/setup.bash
 ros2 run demo_nodes_cpp talker
 <span class="out"># terminal 2</span>
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/humble/setup.bash
 ros2 run demo_nodes_py listener
 <span class="out"># terminal 3</span>
 ros2 node list   <span class="out"># /talker  /listener</span></code></pre>`,
-   link:{label:"Nodes tutorial",url:"https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Nodes/Understanding-ROS2-Nodes.html"}},
+   link:{label:"Nodes tutorial",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Nodes/Understanding-ROS2-Nodes.html"}},
 
   {t:"Topics: how data flows",
    model:"Nodes share data over named channels called <b>topics</b>. One node publishes; others subscribe. Like a radio station — broadcast on a frequency, anyone tuned in hears it. No direct connection needed.",
@@ -487,7 +506,7 @@ ros2 node list   <span class="out"># /talker  /listener</span></code></pre>`,
    sol:`<pre><code>ros2 topic list           <span class="out"># /chatter appears</span>
 ros2 topic echo /chatter
 <span class="out"># → data: 'Hello World: 1'  (then 2, 3, ...)</span></code></pre>`,
-   link:{label:"Topics tutorial",url:"https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html"}},
+   link:{label:"Topics tutorial",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html"}},
 
   {t:"Write a Publisher node (Python)",
    model:"Now you write a node. It's a Python class that inherits from <code>Node</code> (remember classes?) and publishes a message on a timer. This is your first piece of real robot software.",
@@ -516,7 +535,7 @@ def main():
     rclpy.init(); rclpy.spin(Talker())
 if __name__ == "__main__":
     main()</code></pre>`,
-   link:{label:"Writing a publisher",url:"https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html"}},
+   link:{label:"Writing a publisher",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html"}},
 
   {t:"Write a Subscriber node (Python)",
    model:"The mirror image of a publisher: subscribe to a topic and run a callback every time a message arrives. Publisher + subscriber together = a complete conversation.",
@@ -529,7 +548,7 @@ if __name__ == "__main__":
    mastery:"Run your publisher and this subscriber together. Confirm the listener logs each message.",
    sol:`<pre><code>python3 talker.py      <span class="out"># terminal 1</span>
 python3 listener.py    <span class="out"># terminal 2 → Got: hello from Ivan</span></code></pre><p>The callback fires once per message the talker publishes.</p>`,
-   link:{label:"Writing a subscriber",url:"https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html"}},
+   link:{label:"Writing a subscriber",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html"}},
 
   {t:"Services and parameters",
    model:"Topics stream continuously. <b>Services</b> are request→response (ask once, get one answer — like a function call across nodes). <b>Parameters</b> are tunable settings on a node (e.g. a max speed you can change while it runs).",
@@ -546,7 +565,7 @@ ros2 service list
 ros2 service call /add_two_ints example_interfaces/srv/AddTwoInts "{a: 2, b: 3}"
 <span class="out"># → sum=5</span>
 ros2 param list</code></pre>`,
-   link:{label:"Services tutorial",url:"https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html"}},
+   link:{label:"Services tutorial",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html"}},
 
   {t:"Build a package with colcon",
    model:"Real ROS2 code lives in <b>packages</b> inside a <b>workspace</b>, compiled with <code>colcon</code>. This is the structure every robot project (including the SDK demos) uses.",
@@ -566,7 +585,7 @@ cd ~/ros2_ws
 colcon build
 source install/setup.bash
 ros2 run my_pkg talker</code></pre>`,
-   link:{label:"Creating a package",url:"https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Creating-Your-First-ROS2-Package.html"}},
+   link:{label:"Creating a package",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Creating-Your-First-ROS2-Package.html"}},
 
   {t:"Visualize with rqt_graph and echo",
    model:"Seeing the graph makes everything click. <code>rqt_graph</code> draws every node and the topics connecting them — debugging becomes 'spot the missing arrow'.",
@@ -581,7 +600,7 @@ ros2 run my_pkg talker</code></pre>`,
    sol:`<pre><code>python3 talker.py
 python3 listener.py
 rqt_graph   <span class="out"># /talker → /chatter → /listener</span></code></pre><p>No connection? Click ↻ refresh, then verify the topic names match exactly.</p>`,
-   link:{label:"rqt_graph",url:"https://docs.ros.org/en/jazzy/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html"}},
+   link:{label:"rqt_graph",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html"}},
 
   {t:"Capstone: a complete pub/sub system",
    model:"Prove you can build a working ROS2 system from scratch: a sensor node that publishes a changing value, and a reactor node that responds when it crosses a threshold. This is the sense→decide→act loop you'll run on the G1.",
@@ -596,7 +615,7 @@ rqt_graph   <span class="out"># /talker → /chatter → /listener</span></code>
 source install/setup.bash
 ros2 run my_pkg sensor    <span class="out"># terminal 1</span>
 ros2 run my_pkg reactor   <span class="out"># terminal 2</span></code></pre><p>Watch the reactor switch between GO and STOP as the random distance crosses 20.</p>`,
-   link:{label:"Beginner tutorials hub",url:"https://docs.ros.org/en/jazzy/Tutorials.html"}}
+   link:{label:"Beginner tutorials hub",url:"https://docs.ros.org/en/humble/Tutorials.html"}}
  ]},
 
 {id:"cpp",icon:"⚙️",title:"C++",time:"ongoing (after ROS2 basics)",why:"Needed for low-level motor control and performance. unitree_sdk2 is C++ based.",
@@ -730,7 +749,71 @@ install(TARGETS talker DESTINATION lib/\${PROJECT_NAME})</code></pre><pre><code>
 source install/setup.bash
 ros2 run my_cpp_pkg talker
 ros2 topic echo /chatter   <span class="out"># "hi from C++"</span></code></pre>`,
-   link:{label:"C++ pub/sub tutorial",url:"https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Cpp-Publisher-And-Subscriber.html"}}
+   link:{label:"C++ pub/sub tutorial",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Cpp-Publisher-And-Subscriber.html"}}
+ ]},
+
+{id:"aiml",icon:"🧠",title:"AI/ML Concepts",time:"read-up (1–2 days)",why:"Understand the AI landscape your robot will operate in — VLAs, LLMs, and local inference tools that bridge robotics with modern AI.",
+ resource:{label:"NVIDIA Isaac Lab — locomotion policy blog",url:"https://developer.nvidia.com/blog/train-a-quadruped-locomotion-policy-and-simulate-cloth-manipulation-with-nvidia-isaac-lab-and-newton/"},
+ tasks:[
+  {t:"Machine Learning, VLM, and VLA — what they are and why they matter",
+   model:"<b>ML</b> teaches computers to improve from data instead of explicit rules. <b>VLMs</b> (Vision-Language Models) take images and text → produce text. <b>VLAs</b> (Vision-Language-Action models) take images and text → produce robot <i>actions</i>. A VLA is a robot brain that sees the world and decides what to do next.",
+   steps:[
+    {say:"Classic ML: train a function on data so it generalises to new inputs. Neural networks, image classifiers, reinforcement learning — all ML. The robot improves by experience, not by a programmer typing every rule.",cmd:"",out:""},
+    {say:"VLM (e.g. GPT-4V, LLaVA): give it an image + a text question → get a text answer. 'What is on the table?' → 'A red cup and a pen.' Useful for perception, not directly for motion.",cmd:"",out:""},
+    {say:"VLA (e.g. RT-2, OpenVLA, UniFolm-VLA): give it an image + a language command → get a robot action (joint angles, velocity). 'Pick up the red cup' → motor commands. This is the key leap for humanoid control.",cmd:"",out:""},
+    {say:"Read the NVIDIA Isaac Lab blog (resource link above) to see a real training pipeline: simulate → train policy with RL → deploy to physical robot.",cmd:"",out:""}
+   ],
+   trip:"VLA outputs are predictions, not guaranteed correct actions. The model generalises to situations it <i>saw during training</i>. For safety on the G1, always wrap VLA outputs through a safety clamp layer and test in simulation before physical deployment.",
+   ref:[["ML","Learns patterns from data, improves with experience"],["VLM","Image + text → text (describes, answers)"],["VLA","Image + text → action (drives the robot)"],["Policy","The learned function: observation → action"],["RL","Reinforcement Learning — learn by reward signal"],["Sim-to-real","Train in simulation, deploy to physical robot"]],
+   mastery:"In your own words: what's the difference between a VLM and a VLA? Give one concrete example of each being used on a humanoid robot.",
+   sol:`<p><b>VLM</b>: takes image + text → produces text. Example: point a camera at a table and ask "what objects are present?" — the VLM returns a description. Useful for perception and scene understanding.</p>
+<p><b>VLA</b>: takes image + text → produces a robot action (joint positions, velocity commands). Example: "pick up the cup" → the VLA outputs a wrist trajectory to grasp it. The robot <em>acts</em> on what it sees.</p>
+<p>A humanoid robot pipeline might use: VLM to understand the scene, then VLA to execute the action.</p>`,
+   link:{label:"NVIDIA Isaac Lab blog",url:"https://developer.nvidia.com/blog/train-a-quadruped-locomotion-policy-and-simulate-cloth-manipulation-with-nvidia-isaac-lab-and-newton/"}},
+
+  {t:"LeRobot and UniFolm-VLA — robot AI you can actually use",
+   model:"<b>LeRobot</b> (Hugging Face) is an open-source framework for real-robot learning: pre-trained policies, datasets from real robots, and fine-tuning tooling. <b>UniFolm-VLA</b> (Unitree) is a VLA specifically trained for Unitree humanoid bodies — a pre-built brain for the G1.",
+   steps:[
+    {say:"LeRobot provides: pre-trained robot policies, standardised dataset format for recording demonstrations, and code to fine-tune those policies for your specific task — all open-source.",cmd:"",out:""},
+    {say:"UniFolm-VLA by Unitree Robotics is a VLA fine-tuned on Unitree humanoid robot data. It takes camera images + a language command and outputs action tokens the G1 can execute.",cmd:"",out:""},
+    {say:"The key workflow: (1) collect demonstrations on your G1 for a specific task, (2) format them as a LeRobot dataset, (3) fine-tune UniFolm-VLA on those demos, (4) run inference on the G1 through the SDK.",cmd:"",out:""},
+    {say:"Browse the UniFolm-VLA GitHub repo (resource link) to see the model architecture, how demonstrations are formatted, and how to run inference.",cmd:"",out:""}
+   ],
+   trip:"You don't need to train from scratch. Fine-tuning a pre-trained VLA on 50–200 demonstrations of your task is practical on a workstation with a single GPU. Training from scratch requires a cluster and millions of samples — not feasible for a single robot project.",
+   ref:[["LeRobot","Hugging Face's open-source robot learning framework"],["UniFolm-VLA","Unitree's VLA for humanoid robots (G1 compatible)"],["Fine-tuning","Adapt a pre-trained model to a new task with small data"],["Demonstration","One recording of a human teleoperation completing the task"],["Inference","Run the trained model to produce actions in real time"]],
+   mastery:"What is the difference between training from scratch and fine-tuning, and why does fine-tuning matter when you have one G1 and limited time?",
+   sol:`<p><b>Training from scratch</b>: random weights → trained on millions of robot samples. Needs GPU clusters, weeks of compute. Not realistic for one robot.</p>
+<p><b>Fine-tuning</b>: start from UniFolm-VLA's pre-trained weights, then train on your specific task data (50–200 teleoperated demos). Fast (hours to a day), runs on a single workstation GPU.</p>
+<p>Result: a model that already knows how a Unitree humanoid body works, now specialised to pick up the object you care about in your environment.</p>`,
+   link:{label:"UniFolm-VLA on GitHub",url:"https://github.com/unitreerobotics/unifolm-vla"}},
+
+  {t:"What is an LLM (Large Language Model)?",
+   model:"An LLM is a very large neural network trained on vast amounts of text. It predicts what token comes next — but at scale, this becomes reasoning, code generation, and conversation. GPT-4, Claude, and Llama are all LLMs.",
+   steps:[
+    {say:"Core mechanism: predict the next token. Trained on internet-scale text, billions of parameters, the model learns syntax, facts, and reasoning patterns as side effects of that prediction task.",cmd:"",out:""},
+    {say:"Key properties to know: <b>context window</b> (how much text it reads at once — affects how much task context you can give it), <b>temperature</b> (controls randomness of output), <b>fine-tuning</b> (specialise it on domain-specific data).",cmd:"",out:""},
+    {say:"Relevance to robotics: an LLM can parse natural language commands ('bring me the red cup from the left shelf') and convert them into structured robot task descriptions that a VLA or planner can execute. It's the 'understand what the human wants' layer.",cmd:"",out:""}
+   ],
+   trip:"LLMs pattern-match — they don't look things up like a database. They can confidently produce wrong answers (called hallucination). For robot control, always validate LLM outputs against real sensor state and safety rules before turning them into motor commands.",
+   ref:[["LLM","Neural network trained on text, produces text"],["Token","Unit of text (~word or syllable)"],["Context window","How much text the model reads at once"],["Hallucination","Confident but wrong output — a real risk for robotics"],["Fine-tuning","Specialise an LLM on domain data (e.g. robotics commands)"]],
+   mastery:"In one paragraph: what does an LLM do, and what is one specific risk of using an LLM as part of a robot's decision loop?",
+   sol:`<p>An LLM predicts the next token given a sequence, trained on massive text data. At scale this enables reasoning, code generation, and natural language understanding. The key risk for robotics: <b>hallucination</b> — the model produces plausible-sounding but factually wrong outputs with no indication it is wrong. A robot acting on a hallucinated command (wrong object, wrong direction) could damage itself or injure people. Mitigate by: (1) grounding LLM outputs against real sensor readings, (2) requiring structured output with explicit confidence bounds, (3) human confirmation before high-risk actions.</p>`,
+   link:{label:"What is an LLM? (Cloudflare explainer)",url:"https://www.cloudflare.com/learning/ai/what-is-large-language-model/"}},
+
+  {t:"What is llama.cpp — local LLM inference",
+   model:"llama.cpp is a C++ library that runs LLMs efficiently on CPUs (and consumer GPUs) without requiring cloud APIs or expensive hardware. It works by <b>quantizing</b> model weights — compressing from 32-bit floats to 4-bit integers — so a capable model fits in regular RAM and runs fast.",
+   steps:[
+    {say:"Why it exists: full-precision LLMs need GPU clusters. llama.cpp quantizes weights so a 7B-parameter model that would normally need 28 GB of VRAM fits in ~4 GB of RAM and runs on a laptop CPU at 30–50 tokens/second.",cmd:"",out:""},
+    {say:"Why it matters for robotics: a small LLM running locally can parse natural language commands with <b>zero latency</b> and <b>no internet requirement</b> — essential for real-time robot control where cloud round-trips add 1–2 seconds of delay.",cmd:"",out:""},
+    {say:"GGUF format: llama.cpp uses its own model file format (GGUF). Models are downloaded from Hugging Face, converted or downloaded in GGUF format, then run directly.",cmd:"",out:""},
+    {say:"Browse the llama.cpp GitHub (resource link) to see: supported models, how to build it from source, and the basic inference command.",cmd:"",out:""}
+   ],
+   trip:"Bigger model ≠ better for robotics. A 7B quantized model at 50 tokens/sec running locally beats a 70B cloud model with 2-second API latency for a real-time control loop. Match model size to your hardware and your latency budget — not to benchmark leaderboards.",
+   ref:[["llama.cpp","Efficient C++ LLM inference — CPU and GPU"],["Quantization","Compress weights (32-bit→4-bit) to fit in RAM"],["GGUF","Model file format llama.cpp uses"],["Tokens/sec","Output speed — key for real-time use"],["On-device","Runs locally, no internet, low latency"]],
+   mastery:"What is quantization and why does it make LLMs viable on robot hardware (low-end GPUs or CPU)?",
+   sol:`<p><b>Quantization</b>: reduce the numerical precision of model weights. A 7B-parameter model in 32-bit float requires ~28 GB. Quantized to 4-bit, it needs ~4 GB — fitting in normal RAM. Accuracy drops slightly but output quality remains useful.</p>
+<p>For robot hardware: a compact quantized model runs locally at ~50ms latency instead of 1–2 second cloud round-trips. This makes language understanding feasible inside a real-time robot control loop without an internet connection on-site.</p>`,
+   link:{label:"llama.cpp on GitHub",url:"https://github.com/ggml-org/llama.cpp"}}
  ]},
 
 {id:"g1sdk",icon:"🦿",title:"Unitree G1 SDK",time:"the goal",why:"Everything above leads here. Now you control the robot directly with unitree_sdk2.",
@@ -828,6 +911,7 @@ const PROJECTS={
   python:{name:"Robot Mission Logger (CLI app)",brief:"A text-based program that tracks 'missions' for your future robot. Touches every Python lesson at once.",reqs:["A <code>Mission</code> class with a name and a done/not-done status.","A menu loop (<code>while</code> + <code>input()</code>) to add, list, and complete missions.","Save missions to a file and reload them when the program restarts.","Wrap risky input in <code>try/except</code> so bad input never crashes it."],stretch:["Add priorities and sort the list by priority.","Track a timestamp for when each mission was completed."],pass:"You can add missions, quit, restart, and your missions are still there — with no crash on bad input."},
   ros2:{name:"Obstacle-Avoider (3-node system)",brief:"A miniature sense→decide→act robot brain — the exact pattern you'll use on the G1, with fake data.",reqs:["A <b>sensor</b> node publishing a fake distance reading on a topic.","A <b>brain</b> node that subscribes and publishes a command: 'GO' if far, 'STOP' if close.","A <b>motor</b> node that subscribes to the command and logs what it would do.","All three in one colcon package, launched with <code>ros2 run</code>."],stretch:["Add a parameter for the stop-distance threshold so you can tune it without editing code.","Open <code>rqt_graph</code> and screenshot the three connected nodes."],pass:"All three nodes run together and the motor reacts in real time as sensor values cross the threshold."},
   cpp:{name:"Fast Stats Engine",brief:"Rebuild real logic in compiled C++ — organized, fast, and built the way the SDK is built.",reqs:["A <code>Stats</code> class split into <code>stats.h</code>/<code>stats.cpp</code> taking a <code>std::vector&lt;double&gt;</code>.","Methods for mean, min, max, and count.","A <code>main.cpp</code> that fills a vector and prints all the stats.","Built with a <code>CMakeLists.txt</code> (not a hand-typed g++ command)."],stretch:["Add standard deviation.","Wrap it as a ROS2 C++ node that publishes the computed mean."],pass:"<code>cmake .. && make && ./app</code> compiles cleanly and prints correct stats from your Stats class."},
+  aiml:{name:"AI/ML Concepts Brief",brief:"Consolidate your understanding of the AI landscape by writing a short technical summary in your own words.",reqs:["Write a paragraph each on VLM, VLA, and LLM — define each and give one robotics use case.","Describe how UniFolm-VLA could be used with the G1: what does it take as input, what does it output?","Explain what llama.cpp enables and one specific advantage it has over a cloud API for real-time robotics.","Describe the training vs fine-tuning tradeoff and why fine-tuning is the practical path for one G1."],stretch:["Find one other open-source VLA project and compare it to UniFolm-VLA (architecture, supported robots, data format).","Install llama.cpp locally in WSL and run a small quantized model (e.g. Llama 3 8B GGUF)."],pass:"You can explain all four concepts to a teammate who hasn't done these lessons, without looking at notes — and connect each concept to a concrete G1 use case."},
   g1sdk:{name:"Reactive Posture Guardian",brief:"Your first real safety-aware robot behaviour — read state, decide, act, all within limits.",reqs:["Read the robot's orientation/IMU state in a loop.","Decide: if tilt exceeds a safe threshold you define, trigger a safe damping/standing response.","Send that command through a clean control loop at a steady rate.","Keep a working emergency stop; test only with the robot supported."],stretch:["Log every state+decision to a file to review the run.","Make the threshold tunable and test a few values safely."],pass:"With the robot supported, your program reads live state and triggers the correct safe response when you tilt it past the threshold."}
 };
 const GRAND={name:"Grand Challenge: Autonomous Behavior, End to End",brief:"Prove the whole stack came together. One project that uses every skill from WSL to the SDK.",reqs:["<b>WSL/git:</b> the whole project lives in a git repo you push to GitHub.","<b>Python or C++:</b> your own clean, well-structured code (classes, functions, error handling).","<b>ROS2:</b> at least two nodes communicating — a sense→decide→act loop.","<b>SDK:</b> reads real G1 state and sends a safe, original behaviour in response.","A README explaining what it does, how to run it, and the safety limits."],pass:"Someone could clone your repo, read the README, and run your behaviour on a G1 safely. At that point you are, by any reasonable definition, an intermediate robot programmer."};
