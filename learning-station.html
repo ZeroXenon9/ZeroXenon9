@@ -117,6 +117,13 @@
   .sec li{margin:4px 0;}
   .model{border-left:4px solid var(--teal);}
   .model h3{color:var(--teal);}
+  .docs{border-left:4px solid var(--purple);}
+  .docs h3{color:var(--purple);}
+  .docs h4.dh{font-size:.92rem;color:var(--purple);margin:16px 0 5px;font-weight:600;}
+  .docs h4.dh:first-of-type{margin-top:2px;}
+  .docs ol{margin:8px 0 8px 20px;}
+  .docs ol li{margin:4px 0;}
+  .docs pre{margin:6px 0 10px;}
   pre{background:var(--code);border:1px solid var(--border);border-radius:7px;padding:12px 14px;overflow-x:auto;margin:8px 0;font-size:.86rem;line-height:1.5;}
   code{font-family:"SF Mono",Consolas,Monaco,monospace;}
   p code,li code,td code{background:var(--panel2);padding:1px 6px;border-radius:4px;font-size:.86em;color:var(--purple);}
@@ -228,6 +235,11 @@ ls                    <span class="out"># only name.txt remains</span></code></p
 
   {t:"Move files between Windows and Linux",
    model:"You have two filing cabinets side by side. Windows files appear inside Linux at <code>/mnt/c/</code>. Linux files appear inside Windows Explorer at <code>\\\\wsl$\\Ubuntu\\home\\you</code>. Same drive, two doors.",
+   notes:[
+    ["Case sensitivity bites here",`<p>Linux paths are <b>case-sensitive</b>; Windows paths aren't. Two real traps:</p><ul><li>The drive is <code>/mnt/c</code> (lowercase), <b>not</b> <code>/mnt/C</code> — <code>ls /mnt/C/...</code> fails with "No such file or directory".</li><li>Folder names must match exactly: <code>OneDrive</code>, not <code>Onedrive</code>. If your Desktop lives in OneDrive, the path is <code>/mnt/c/Users/You/OneDrive/Desktop</code>.</li></ul><p>When a path "doesn't exist", list one level up to see the real spelling: <code>ls /mnt/c/Users/You</code>.</p>`],
+    ["\"cannot stat\" means the source is missing",`<p><code>cp: cannot stat '/home/you/my_name.txt'</code> is not about the destination — it means the <i>source</i> file isn't where you said. Check before you copy:</p><pre><code>ls ~                          # is the file really in home?\nfind ~ -name "my_name.txt"    # search for it</code></pre><p>Only once <code>ls</code> shows the file should you run <code>cp</code>.</p>`],
+    ["Find your Windows username",`<p>Unsure what comes after <code>/mnt/c/Users/</code>? List it:</p><pre><code>ls /mnt/c/Users</code></pre><p>One of those folders is yours — use that exact name (capitalisation included) in your paths.</p>`]
+   ],
    steps:[
     {say:"Peek at your Windows Desktop from inside Linux.",cmd:"ls /mnt/c/Users/YourName/Desktop",out:"Lists your real Windows desktop files."},
     {say:"Copy a Linux file onto your Windows Desktop.",cmd:"cp ~/name.txt /mnt/c/Users/YourName/Desktop/",out:"It now appears on your Windows desktop."},
@@ -300,6 +312,33 @@ rm file.txt</code></pre><p>If that flowed without thinking, you've got the termi
 {id:"python",icon:"🐍",title:"Python",time:"2–4 weeks",why:"Most Unitree examples are Python first. Faster to prototype and test on the robot.",
  resource:{label:"Official Python tutorial",url:"https://docs.python.org/3/tutorial/"},
  tasks:[
+  {t:"Set up &amp; run Python in WSL",
+   model:"Before variables and loops, learn the loop you'll repeat thousands of times: <b>edit a file → run it → read the output → fix → repeat</b>. In WSL this all happens in your Ubuntu terminal. Ubuntu already ships with Python 3, so there's nothing to install — you just need to know <i>where</i> to keep code, <i>how</i> to run it, and <i>what</i> to edit it with.",
+   notes:[
+    ["Two ways to run Python",`<p>Python has two modes, and beginners mix them up:</p><ul><li><b>Interactive (REPL):</b> type <code>python3</code> alone and you get a <code>&gt;&gt;&gt;</code> prompt. Each line runs the instant you press Enter — perfect for testing one idea. Leave with <code>exit()</code> or <code>Ctrl+D</code>.</li><li><b>Script files:</b> put code in a <code>.py</code> file and run <code>python3 file.py</code>. This is how real programs are written and re-run.</li></ul><p>Rule of thumb: <b>explore in the REPL, build in a file.</b> Anything you want to keep belongs in a <code>.py</code> file you can re-run and track with git.</p>`],
+    ["Where your code should live",`<p>The single most important WSL habit: keep projects in your <b>Linux home</b> (<code>~/</code>, e.g. <code>~/robotics/</code>) — <b>not</b> under <code>/mnt/c/</code>. Linux-side code runs far faster, git behaves correctly, and file permissions work the way Python expects. The Windows drive is for <i>moving files in and out</i>, not for living in.</p><pre><code>mkdir -p ~/robotics/practice\ncd ~/robotics/practice</code></pre>`],
+    ["Editing: nano now, VS Code soon",`<p>You need a way to create and edit <code>.py</code> files:</p><ul><li><b>nano</b> — a simple editor inside the terminal. <code>nano hello.py</code> opens it; <code>Ctrl+O</code> then Enter saves; <code>Ctrl+X</code> exits. Always available.</li><li><b>VS Code (recommended)</b> — install VS Code on Windows, add the <i>WSL</i> extension, then run <code>code .</code> inside a project folder. It opens on Windows but edits your Linux files directly, with autocomplete and error highlighting. This is how most people write Python in WSL.</li></ul><p>Start with nano today; switch to <code>code .</code> the moment you want a real editor — your files never move.</p>`],
+    ["python vs python3, and pip",`<p>On Ubuntu the command is <code>python3</code> (and <code>pip3</code> for packages). Plain <code>python</code> may not exist, which breaks Windows-style tutorials. To make <code>python</code> work too:</p><pre><code>sudo apt install python-is-python3 -y</code></pre><p>Check what you have, and install pip if needed:</p><pre><code>python3 --version\npip3 --version          # missing? sudo apt install python3-pip -y</code></pre>`]
+   ],
+   steps:[
+    {say:"Confirm Python is there — Ubuntu ships with it, so this just prints the version.",cmd:"python3 --version",out:"→ Python 3.x.x"},
+    {say:"Make a Linux-side home for your code and move into it.",cmd:"mkdir -p ~/robotics/practice\ncd ~/robotics/practice",out:"Now inside /home/you/robotics/practice."},
+    {say:"Open a new file in nano.",cmd:"nano hello.py",out:"An empty editor opens."},
+    {say:"Type this one line, then save with <code>Ctrl+O</code> → Enter and exit with <code>Ctrl+X</code>.",cmd:"print(\"Hello from WSL Python\")",out:"Back at the terminal, hello.py now exists."},
+    {say:"Run your script.",cmd:"python3 hello.py",out:"→ Hello from WSL Python"},
+    {say:"Try interactive mode for quick experiments, then leave it.",cmd:"python3\n>>> 2 + 2\n>>> exit()",out:"→ 4, then back to the shell."}
+   ],
+   trip:"Two classic errors. First: typing <code>python</code> instead of <code>python3</code> and getting <code>command not found</code> — on Ubuntu it's <code>python3</code>. Second: saving projects under <code>/mnt/c/</code> and wondering why everything is slow and git misbehaves — keep code in <code>~/</code>, and only copy to <code>/mnt/c/</code> when you specifically need the file in Windows.",
+   ref:[["python3 file.py","Run a script"],["python3","Open the REPL"],["exit() / Ctrl+D","Leave the REPL"],["nano file.py","Edit in the terminal"],["code .","Open folder in VS Code"],["python3 --version","Check the version"],["pip3 install x","Install a package"]],
+   mastery:"From an empty terminal: make <code>~/robotics/practice</code>, create <code>hello.py</code> with nano that prints your name, run it with <code>python3</code>, then open the REPL and compute <code>10 * 10</code>.",
+   sol:`<pre><code>mkdir -p ~/robotics/practice && cd ~/robotics/practice
+nano hello.py        <span class="out"># type: print("Ivan How"), then Ctrl+O, Enter, Ctrl+X</span>
+python3 hello.py     <span class="out"># Ivan How</span>
+python3              <span class="out"># open the REPL</span>
+&gt;&gt;&gt; 10 * 10          <span class="out"># 100</span>
+&gt;&gt;&gt; exit()</code></pre><p>If that whole loop felt natural, you have the WSL Python workflow down — everything after this is just what you type <i>inside</i> the file.</p>`,
+   link:{label:"Develop in WSL with VS Code",url:"https://code.visualstudio.com/docs/remote/wsl"}},
+
   {t:"Variables and data types",
    model:"A variable is a labelled box that holds a value. You don't declare a type — Python looks at what you put in and figures it out.",
    steps:[
@@ -602,6 +641,35 @@ ros2 run my_pkg reactor   <span class="out"># terminal 2</span></code></pre><p>W
 {id:"cpp",icon:"⚙️",title:"C++",time:"ongoing (after ROS2 basics)",why:"Needed for low-level motor control and performance. unitree_sdk2 is C++ based.",
  resource:{label:"learncpp.com",url:"https://www.learncpp.com/"},
  tasks:[
+  {t:"Set up &amp; run C++ in WSL",
+   model:"C++ adds one step to the Python loop: <b>edit → compile → run</b>. The computer can't run your <code>.cpp</code> text directly — a compiler (<code>g++</code>) first turns it into a binary, and you run that binary. In WSL you install the GNU toolchain once, then live in this three-step cycle. It's the exact workflow <code>unitree_sdk2</code> is built with.",
+   notes:[
+    ["Install the toolchain once",`<p>Ubuntu has no C++ compiler by default. One package gives you the whole GNU toolchain:</p><pre><code>sudo apt update\nsudo apt install build-essential gdb -y</code></pre><p><code>build-essential</code> brings <code>g++</code> and <code>make</code>; <code>gdb</code> is the debugger. Verify, and add CMake (the SDK's build system):</p><pre><code>g++ --version\nsudo apt install cmake -y\ncmake --version</code></pre>`],
+    ["The edit → compile → run loop",`<p>Every C++ change is three steps, and forgetting the middle one is the #1 confusion ("I edited it but nothing changed"):</p><ol><li><b>Edit</b> the <code>.cpp</code> file.</li><li><b>Compile</b>: <code>g++ hello.cpp -o hello</code> — produces a binary named <code>hello</code>.</li><li><b>Run</b>: <code>./hello</code> (the <code>./</code> means "in this folder").</li></ol><p>Python skips the compile step; C++ never does. Until you recompile, <code>./hello</code> is still running your old code.</p>`],
+    ["Compile with warnings on",`<p>As code grows, compile with warnings — they catch real bugs before they bite:</p><pre><code>g++ -Wall -Wextra -std=c++17 hello.cpp -o hello</code></pre><ul><li><code>-Wall -Wextra</code> — turn on helpful warnings.</li><li><code>-std=c++17</code> — use a modern C++ standard (the SDK does).</li><li><code>-g</code> — add debug info so <code>gdb ./hello</code> can step through your code.</li></ul>`],
+    ["Editing: nano and VS Code",`<p>Same choice as Python: <code>nano file.cpp</code> works anywhere, but for real C++ install VS Code on Windows, add the <b>WSL</b> and <b>C/C++</b> extensions, and run <code>code .</code> in your project. You get autocomplete, errors underlined before you compile, and one-click build/debug — a big comfort jump once files outgrow one screen.</p>`]
+   ],
+   steps:[
+    {say:"Install the compiler and debugger (once per machine).",cmd:"sudo apt update\nsudo apt install build-essential gdb -y",out:"Gives you g++, make, and gdb."},
+    {say:"Confirm the compiler is ready.",cmd:"g++ --version",out:"→ g++ (Ubuntu ...) 13.x"},
+    {say:"Make a Linux-side project folder and enter it.",cmd:"mkdir -p ~/robotics/cpp\ncd ~/robotics/cpp",out:"Inside /home/you/robotics/cpp."},
+    {say:"Open <code>hello.cpp</code> in nano (Ctrl+O, Enter to save; Ctrl+X to exit).",cmd:"nano hello.cpp",out:"An empty editor opens."},
+    {say:"Type this program.",cmd:"#include <iostream>\nint main() {\n    std::cout << \"Hello from WSL C++\\n\";\n    return 0;\n}",out:""},
+    {say:"Compile, then run the binary — two commands every time you change the file.",cmd:"g++ -Wall hello.cpp -o hello\n./hello",out:"→ Hello from WSL C++"}
+   ],
+   trip:"The trap that defines C++: <b>editing the file changes nothing until you recompile.</b> If the output doesn't match your code, you almost certainly forgot to re-run <code>g++</code>. Build the reflex: after every edit, <code>g++ … -o name</code> then <code>./name</code>. (And <code>./hello</code> needs the <code>./</code> — plain <code>hello</code> won't be found.)",
+   ref:[["g++ f.cpp -o name","Compile into 'name'"],["./name","Run the binary"],["g++ -Wall -Wextra …","Compile with warnings"],["-std=c++17","Use modern C++"],["g++ -g … + gdb","Compile + debug"],["nano f.cpp / code .","Edit the source"]],
+   mastery:"From scratch: install <code>build-essential</code>, make <code>~/robotics/cpp</code>, write <code>hello.cpp</code> that prints your name, compile it with <code>-Wall</code>, and run the binary.",
+   sol:`<pre><code>sudo apt install build-essential -y
+mkdir -p ~/robotics/cpp && cd ~/robotics/cpp
+nano hello.cpp     <span class="out"># type the program below, save, exit</span></code></pre><pre><code>#include &lt;iostream&gt;
+int main() {
+    std::cout &lt;&lt; "Ivan How\\n";
+    return 0;
+}</code></pre><pre><code>g++ -Wall hello.cpp -o hello
+./hello            <span class="out"># Ivan How</span></code></pre><p>Edit → compile → run. That three-step loop is C++ in WSL in a nutshell.</p>`,
+   link:{label:"Using C++ and WSL in VS Code",url:"https://code.visualstudio.com/docs/cpp/config-wsl"}},
+
   {t:"Compile and run a hello-world",
    model:"Unlike Python, C++ must be <b>compiled</b> into a binary before it runs. That extra build step is the price of C++'s speed — and it's the workflow the whole SDK uses.",
    steps:[
@@ -967,6 +1035,13 @@ function renderLesson(sid,i){
         ${st.out?`<div class="expect">${st.out}</div>`:''}
       </div></div>`;
     });
+    html+=`</div>`;
+  }
+
+  // Deeper documentation
+  if(task.notes&&task.notes.length){
+    html+=`<div class="sec docs"><h3>📖 Deeper dive</h3>`;
+    task.notes.forEach(n=>{ html+=`<h4 class="dh">${n[0]}</h4>${n[1]}`; });
     html+=`</div>`;
   }
 
