@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unitree G1 Learning Station</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --green:#3fb950;
+    --amber:#d29922; --purple:#bc8cff; --red:#f85149; --teal:#39d3b6; --code:#0b0f14;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:24px 16px 80px;}
+  .wrap{max-width:860px; margin:0 auto;}
+  a{color:var(--accent);}
+
+  header{text-align:center; margin-bottom:8px;}
+  header h1{font-size:1.8rem;}
+  header p{color:var(--muted); margin-top:6px; font-size:.92rem;}
+
+  /* Next-up banner */
+  .nextup{background:linear-gradient(90deg,rgba(88,166,255,.16),rgba(188,140,255,.12)); border:1px solid var(--accent); border-radius:12px; padding:14px 18px; margin:20px 0; display:flex; align-items:center; gap:14px; cursor:pointer;}
+  .nextup:hover{filter:brightness(1.15);}
+  .nextup .tag{font-size:.7rem; letter-spacing:1px; color:var(--accent); text-transform:uppercase;}
+  .nextup .what{font-weight:600; margin-top:2px;}
+  .nextup .where{color:var(--muted); font-size:.82rem;}
+  .nextup .go{margin-left:auto; color:var(--accent); font-size:1.4rem;}
+
+  /* Overall progress */
+  .overall{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:18px 0;}
+  .overall .row{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .overall .pct{font-size:1.4rem; font-weight:700; color:var(--green);}
+  .bar{height:14px; background:var(--panel2); border-radius:8px; overflow:hidden; border:1px solid var(--border);}
+  .bar > span{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--green),var(--accent)); transition:width .4s ease;}
+  .reset{background:transparent; border:1px solid var(--border); color:var(--muted); padding:6px 12px; border-radius:8px; cursor:pointer; font-size:.8rem;}
+  .reset:hover{border-color:var(--red); color:var(--red);}
+
+  /* Stage cards (home) */
+  .stage{background:var(--panel); border:1px solid var(--border); border-radius:12px; margin-bottom:18px; overflow:hidden; border-left:4px solid var(--border); transition:border-color .3s;}
+  .stage.done{border-left-color:var(--green);}
+  .stage.active{border-left-color:var(--accent);}
+  .stage-head{display:flex; align-items:center; gap:14px; padding:16px 20px; cursor:pointer; user-select:none;}
+  .stage-head:hover{background:var(--panel2);}
+  .badge{flex:none; width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.05rem; background:var(--panel2); border:2px solid var(--border);}
+  .stage.done .badge{background:var(--green); border-color:var(--green); color:#0d1117;}
+  .stage-title{flex:1;}
+  .stage-title h2{font-size:1.15rem;}
+  .stage-title .meta{color:var(--muted); font-size:.82rem; margin-top:2px;}
+  .stage-pct{font-size:.85rem; color:var(--muted);}
+  .chev{color:var(--muted); transition:transform .25s; font-size:.9rem;}
+  .stage.open .chev{transform:rotate(90deg);}
+  .stage-body{display:none; padding:0 20px 18px;}
+  .stage.open .stage-body{display:block;}
+
+  .why{background:var(--panel2); border-radius:8px; padding:10px 14px; font-size:.88rem; color:var(--muted); margin:6px 0 8px; border-left:3px solid var(--accent);}
+  .resource-link{display:inline-block; font-size:.82rem; margin:2px 0 12px; text-decoration:none;}
+  .resource-link:hover{text-decoration:underline;}
+
+  /* overview */
+  .overview{border:1px solid #2d5a5a; border-radius:10px; margin:2px 0 14px; background:linear-gradient(180deg,rgba(57,211,182,.08),rgba(57,211,182,.02)); padding:14px 16px;}
+  .overview .otitle{font-size:.72rem; letter-spacing:1px; text-transform:uppercase; color:var(--teal); margin-bottom:8px;}
+  .overview .oblock{margin:9px 0;}
+  .overview .olabel{font-weight:600; color:#5fe3c8; font-size:.86rem; display:block;}
+  .overview .otext{font-size:.9rem;}
+  .overview .chain{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:12px; padding-top:11px; border-top:1px solid rgba(57,211,182,.2); font-size:.78rem;}
+  .overview .node{background:rgba(57,211,182,.12); border:1px solid #2d5a5a; border-radius:20px; padding:2px 10px; color:var(--muted);}
+  .overview .node.here{background:var(--teal); color:#0d1117; font-weight:600;}
+  .overview .arrow{color:var(--muted);}
+
+  /* lesson list rows (home) */
+  .lrow{display:flex; align-items:center; gap:11px; padding:11px 13px; border:1px solid var(--border); border-radius:9px; margin-bottom:8px; cursor:pointer;}
+  .lrow:hover{background:var(--panel2); border-color:var(--accent);}
+  .lrow.done{border-color:rgba(63,185,80,.4);}
+  .lrow .lcheck{flex:none; width:22px; height:22px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.8rem; color:var(--muted);}
+  .lrow.done .lcheck{background:var(--green); border-color:var(--green); color:#0d1117;}
+  .lrow .lname{flex:1; font-weight:500;}
+  .lrow .lgo{color:var(--muted);}
+
+  /* project + grand (home) */
+  .project{border:1px solid var(--purple); border-radius:10px; margin:16px 0 4px; background:linear-gradient(180deg,rgba(188,140,255,.10),rgba(188,140,255,.03)); overflow:hidden;}
+  .project.done{border-color:var(--green);}
+  .project-head{display:flex; align-items:flex-start; gap:11px; padding:13px 15px; cursor:pointer;}
+  .project-head:hover{background:rgba(188,140,255,.08);}
+  .project-head input,.grand-head input{appearance:none;-webkit-appearance:none;flex:none;width:21px;height:21px;border:2px solid var(--purple);border-radius:5px;margin-top:1px;cursor:pointer;position:relative;background:var(--bg);}
+  .grand-head input{border-color:var(--amber);width:22px;height:22px;}
+  .project-head input:checked,.grand-head input:checked{background:var(--green);border-color:var(--green);}
+  .project-head input:checked::after,.grand-head input:checked::after{content:"✓";color:#0d1117;font-weight:700;font-size:.85rem;position:absolute;top:-1px;left:4px;}
+  .project-head .pt{flex:1;}
+  .project-head .ptag{font-size:.68rem;letter-spacing:1px;text-transform:uppercase;color:var(--purple);}
+  .project-head .pname{font-weight:600;margin-top:2px;}
+  .project.done .pname{color:var(--muted);}
+  .pchev,.gchev{color:var(--muted);font-size:.8rem;transition:transform .2s;}
+  .project.popen .pchev,.grand.gopen .gchev{transform:rotate(90deg);}
+  .project-content,.grand-content{display:none;padding:2px 16px 16px 47px;font-size:.9rem;}
+  .project.popen .project-content,.grand.gopen .grand-content{display:block;}
+  .project-content h4,.grand-content h4{font-size:.74rem;text-transform:uppercase;letter-spacing:.5px;color:var(--purple);margin:13px 0 5px;}
+  .grand-content h4{color:var(--amber);}
+  .project-content ul,.grand-content ul{margin:5px 0 5px 18px;}
+  .pass{background:rgba(63,185,80,.1);border-left:3px solid var(--green);border-radius:6px;padding:9px 13px;margin:11px 0;font-size:.88rem;}
+  .pass b{color:var(--green);}
+  .grand{border:2px solid var(--amber);border-radius:12px;margin:24px 0 10px;overflow:hidden;background:linear-gradient(180deg,rgba(210,153,34,.12),rgba(210,153,34,.03));}
+  .grand-head{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;cursor:pointer;}
+  .grand-head:hover{background:rgba(210,153,34,.08);}
+  .grand-head .gt h2{font-size:1.2rem;}
+  .grand-head .gtag{font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--amber);}
+
+  /* ===== LESSON PAGE ===== */
+  .breadcrumb{font-size:.82rem;color:var(--muted);margin-bottom:14px;}
+  .breadcrumb a{text-decoration:none;}
+  .lesson-page h1{font-size:1.5rem;margin-bottom:4px;}
+  .lesson-page .sub{color:var(--muted);font-size:.85rem;margin-bottom:18px;}
+  .sec{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;}
+  .sec h3{font-size:.95rem;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .sec p{margin:8px 0;}
+  .sec ul{margin:8px 0 8px 20px;}
+  .sec li{margin:4px 0;}
+  .model{border-left:4px solid var(--teal);}
+  .model h3{color:var(--teal);}
+  pre{background:var(--code);border:1px solid var(--border);border-radius:7px;padding:12px 14px;overflow-x:auto;margin:8px 0;font-size:.86rem;line-height:1.5;}
+  code{font-family:"SF Mono",Consolas,Monaco,monospace;}
+  p code,li code,td code{background:var(--panel2);padding:1px 6px;border-radius:4px;font-size:.86em;color:var(--purple);}
+  .out{color:var(--muted);}
+
+  .step{display:flex;gap:13px;margin:14px 0;}
+  .snum{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#0d1117;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:.85rem;}
+  .sbody{flex:1;min-width:0;}
+  .say{font-size:.9rem;margin-bottom:2px;}
+  .expect{font-size:.84rem;color:var(--muted);margin-top:-2px;}
+  .expect b{color:var(--green);}
+
+  .trip{background:rgba(248,81,73,.08);border-left:3px solid var(--red);border-radius:8px;padding:12px 15px;margin:8px 0;font-size:.9rem;}
+  .trip h3{color:var(--red);}
+  table.ref{width:100%;border-collapse:collapse;font-size:.87rem;margin:8px 0;}
+  table.ref td{border:1px solid var(--border);padding:7px 10px;vertical-align:top;}
+  table.ref td:first-child{white-space:nowrap;width:1%;}
+
+  .mastery{border-left:4px solid var(--amber);}
+  .mastery h3{color:var(--amber);}
+  .soltoggle{background:transparent;border:1px solid var(--border);color:var(--green);padding:6px 14px;border-radius:7px;cursor:pointer;font-size:.84rem;margin-top:6px;}
+  .soltoggle:hover{border-color:var(--green);}
+  .solbody{display:none;margin-top:12px;padding-left:12px;border-left:2px solid rgba(63,185,80,.35);}
+  .solbody.show{display:block;}
+
+  .lpfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;}
+  .markbtn{flex:1;min-width:180px;background:var(--green);color:#0d1117;border:none;font-weight:700;padding:12px;border-radius:9px;cursor:pointer;font-size:.95rem;}
+  .markbtn.isdone{background:var(--panel2);color:var(--green);border:1px solid var(--green);}
+  .navbtn{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:12px 16px;border-radius:9px;cursor:pointer;font-size:.9rem;text-decoration:none;display:inline-block;}
+  .navbtn:hover{border-color:var(--accent);}
+  .navbtn.disabled{opacity:.35;pointer-events:none;}
+
+  footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:30px;}
+  .celebrate{text-align:center;padding:14px;border-radius:10px;margin-bottom:18px;background:linear-gradient(90deg,rgba(63,185,80,.15),rgba(88,166,255,.15));border:1px solid var(--green);display:none;}
+  .celebrate.show{display:block;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* ============================ CONTENT ============================ */
+const STAGE_ORDER=[["wsl","WSL"],["python","Python"],["ros2","ROS2"],["cpp","C++"],["aiml","AI/ML"],["g1sdk","G1 SDK"]];
+
+const OVERVIEWS={
+  wsl:{why:"Every tool you'll touch — Python, ROS2, the C++ compiler, the Unitree SDK — runs in a Linux terminal. Before you can build anything, you need to move around your workshop without thinking about it.",connect:"There's no robotics here yet, and that's the point. The <code>git clone</code> and folder navigation you practice now are the <i>exact</i> moves you'll use to download the G1 SDK in the final chapter.",ready:"You can open a terminal, manage files, move data between Windows and Linux, and version code with git — the literacy every robotics tutorial assumes you already have."},
+  python:{why:"Robotics is 'make the machine do what you mean.' Python is the fastest way to express that, and it's the language Unitree's examples reach for first.",connect:"You learn to think in code here. A ROS2 node is a class; a robot in the SDK is an object. The 'sense → decide → act' logic you'll run on the G1 is just an if-statement inside a loop — built right here.",ready:"You can write a real program from scratch: read data, make decisions, organize code into classes, and save results."},
+  ros2:{why:"A real robot isn't one giant program — it's many small programs talking to each other. ROS2 is the standard that lets them communicate.",connect:"The publisher/subscriber pattern you build is <i>literally</i> how the G1 SDK sends commands and reads state (same DDS messaging). Learn it alongside Python.",ready:"You can design a multi-node sense→decide→act system, build it into a package, and watch it run."},
+  cpp:{why:"Low-level motor control needs the speed of compiled C++. And <code>unitree_sdk2</code>, the library that controls the G1, is written in C++.",connect:"Everything from Python carries over — variables, loops, classes — with stricter syntax and a compile step. The bridge from 'I can prototype' to 'I can ship control code.'",ready:"You can compile a multi-file project with CMake (the SDK's build system) and write a C++ ROS2 node."},
+  aiml:{why:"Modern humanoid robotics is inseparable from AI — VLAs, LLMs, and local inference tools define where the field is heading and what the G1 will eventually be capable of.",connect:"Your ROS2 pub/sub graph can pipe camera frames into a VLA and receive action commands back. llama.cpp can parse natural language instructions and pass structured goals to the G1 SDK. UniFolm-VLA is built specifically for Unitree humanoids — it plugs directly into the SDK you already learned.",ready:"You can clearly explain VLA vs VLM vs LLM, describe how LeRobot and UniFolm-VLA fit into a G1 workflow, and understand what llama.cpp enables for on-device AI in real-time robot control."},
+  g1sdk:{why:"The destination. You connect to a real humanoid, read its sensors, and command its motors with <code>unitree_sdk2</code>.",connect:"It all converges: <code>git clone</code> (WSL), build with CMake (C++), read state + send commands with pub/sub (ROS2), structure logic as sense→decide→act (Python), and optionally pipe a VLA or LLM output as the 'decide' step (AI/ML).",ready:"You can connect to the G1, read live state, send safe commands in a control loop, and write your own behavior — i.e. start real projects."}
+};
+
+/* Each lesson: t(title), model, steps[{say,cmd,out}], trip, ref[[a,b]], mastery, sol, link */
+const ROADMAP=[
+{id:"wsl",icon:"🐧",title:"WSL Basics",time:"1–2 days",why:"You need this to survive inside the terminal daily. Everything else runs here.",
+ resource:{label:"Microsoft WSL basic commands",url:"https://learn.microsoft.com/en-us/windows/wsl/basic-commands"},
+ tasks:[
+  {t:"Install WSL and create your Linux user",
+   model:"WSL drops a real Linux computer inside your Windows machine — no second PC, no dual-boot. One command sets it all up.",
+   steps:[
+    {say:"Open <b>PowerShell as Administrator</b> (Win → type PowerShell → right-click → Run as administrator), then install WSL with <b>Ubuntu 22.04 LTS</b>. This specific version is required for ROS2 Humble.",cmd:"wsl --install -d Ubuntu-22.04",out:"Downloads the Linux kernel + Ubuntu 22.04 LTS, then asks you to restart."},
+    {say:"Restart your PC. Ubuntu opens on its own and asks for a username and password (the password stays invisible as you type — that's normal).",cmd:"",out:""},
+    {say:"Check it landed on the fast version.",cmd:"wsl --status",out:"Should say <b>Default Version: 2</b>."}
+   ],
+   trip:"The invisible password scares people. It's not frozen — Linux hides password characters on purpose. Just type it and press Enter. Your Linux username does <b>not</b> need to match Windows.",
+   mastery:"Open your new Ubuntu terminal and run <code>whoami</code> — it should print your Linux username.",
+   sol:`<pre><code>whoami
+<span class="out"># → ivan  (the name you chose at install)</span></code></pre><p>Confirms which Linux user you're logged in as — separate from Windows.</p>`,
+   link:{label:"WSL install guide",url:"https://learn.microsoft.com/en-us/windows/wsl/install"}},
+
+  {t:"Navigate folders: pwd, ls, cd, mkdir",
+   model:"Think of Linux as a building of rooms (folders). You're a person walking around: <code>pwd</code> = 'where am I?', <code>ls</code> = 'what's in this room?', <code>cd</code> = 'walk into a room', <code>mkdir</code> = 'build a room'.",
+   steps:[
+    {say:"Ask where you are. Every terminal starts in your <b>home</b>.",cmd:"pwd",out:"→ /home/ivan"},
+    {say:"Look around. Add <code>-la</code> to see everything, including hidden files and details.",cmd:"ls -la",out:"Shows files plus <code>.</code> (this room) and <code>..</code> (the room above)."},
+    {say:"Build a room and check it appeared.",cmd:"mkdir practice\nls",out:"→ practice"},
+    {say:"Walk into it and confirm you moved.",cmd:"cd practice\npwd",out:"→ /home/ivan/practice"},
+    {say:"Go back up one level. <code>..</code> means 'the room above me'.",cmd:"cd ..\npwd",out:"→ /home/ivan"}
+   ],
+   trip:"Going <i>back</i> is where beginners freeze. Memorize three escapes: <code>cd ..</code> goes up one level, <code>cd</code> (alone) jumps home instantly, <code>cd -</code> returns to the last folder you were in. Lost? Type <code>cd</code> and you're home.",
+   ref:[["pwd","Where am I?"],["ls -la","List all, with details"],["cd folder","Go in"],["cd ..","Go up one"],["cd","Jump home"],["cd -","Back to previous folder"],["mkdir name","Make a folder"],["Tab","Autocomplete a name"]],
+   mastery:"From memory: go home, make <code>mission</code>, enter it, make <code>data</code> and <code>logs</code> inside, enter <code>data</code> and run <code>pwd</code>, then jump straight home.",
+   sol:`<pre><code>cd
+mkdir mission
+cd mission
+mkdir data logs
+cd data
+pwd            <span class="out"># /home/ivan/mission/data</span>
+cd             <span class="out"># straight home</span></code></pre><p>Tip: press <code>Tab</code> after typing a few letters of a folder name to autocomplete and avoid typos.</p>`,
+   link:{label:"Ubuntu command line tutorial",url:"https://ubuntu.com/tutorials/command-line-for-beginners"}},
+
+  {t:"Manage files: cp, mv, rm, cat",
+   model:"Same building, but now you handle the objects inside the rooms: create, read, copy, rename, throw away. One warning up front: Linux has <b>no Recycle Bin</b> — <code>rm</code> is permanent.",
+   steps:[
+    {say:"Create a file by writing text into it. <code>></code> means 'send this into a file'.",cmd:'echo "hello" > note.txt',out:"Creates note.txt containing 'hello'."},
+    {say:"Read it back.",cmd:"cat note.txt",out:"→ hello"},
+    {say:"Copy it, then rename the copy. <code>cp</code> = copy, <code>mv</code> = move/rename.",cmd:"cp note.txt backup.txt\nmv backup.txt old.txt",out:"Now you have note.txt and old.txt."},
+    {say:"Delete a file.",cmd:"rm old.txt",out:"Gone — permanently."}
+   ],
+   trip:"<code>rm -r folder/</code> deletes a folder <i>and everything inside it</i> with no confirmation and no undo. Before running any <code>rm</code>, glance at <code>ls</code> first to be sure you're deleting what you think you are.",
+   ref:[["echo x > f","Write x into file f"],["cat f","Print a file"],["cp a b","Copy a to b"],["mv a b","Rename/move a to b"],["rm f","Delete a file"],["rm -r d","Delete a folder + contents"]],
+   mastery:"Make a file with your name in it using <code>echo</code>, print it with <code>cat</code>, copy it, then delete the copy.",
+   sol:`<pre><code>echo "Ivan How" &gt; name.txt
+cat name.txt          <span class="out"># Ivan How</span>
+cp name.txt copy.txt
+rm copy.txt
+ls                    <span class="out"># only name.txt remains</span></code></pre>`,
+   link:{label:"File commands",url:"https://ubuntu.com/tutorials/command-line-for-beginners"}},
+
+  {t:"Move files between Windows and Linux",
+   model:"You have two filing cabinets side by side. Windows files appear inside Linux at <code>/mnt/c/</code>. Linux files appear inside Windows Explorer at <code>\\\\wsl$\\Ubuntu\\home\\you</code>. Same drive, two doors.",
+   steps:[
+    {say:"Peek at your Windows Desktop from inside Linux.",cmd:"ls /mnt/c/Users/YourName/Desktop",out:"Lists your real Windows desktop files."},
+    {say:"Copy a Linux file onto your Windows Desktop.",cmd:"cp ~/name.txt /mnt/c/Users/YourName/Desktop/",out:"It now appears on your Windows desktop."},
+    {say:"Open the current Linux folder in Windows Explorer.",cmd:"explorer.exe .",out:"A normal Explorer window opens, drag-and-drop works."}
+   ],
+   trip:"Performance trap: running coding tools (npm, git, build) on files under <code>/mnt/c/</code> is much <b>slower</b>. Golden rule — keep your projects in the Linux side (<code>~/</code>), and only reach into <code>/mnt/c/</code> when you specifically need a Windows file.",
+   ref:[["/mnt/c/...","Your Windows C: drive, from Linux"],["explorer.exe .","Open this folder in Windows Explorer"],["ls /mnt/c/Users","Find your Windows username"]],
+   mastery:"Copy a file from your Linux home to your Windows Desktop, then open it in Explorer with <code>explorer.exe .</code>",
+   sol:`<pre><code>cp ~/name.txt /mnt/c/Users/YourName/Desktop/
+cd /mnt/c/Users/YourName/Desktop
+explorer.exe .</code></pre><p>Replace <code>YourName</code> with your Windows username — run <code>ls /mnt/c/Users</code> if unsure.</p>`,
+   link:{label:"WSL file systems",url:"https://learn.microsoft.com/en-us/windows/wsl/filesystems"}},
+
+  {t:"Update packages: sudo apt update & upgrade",
+   model:"Ubuntu installs software from an app-store-like system called <code>apt</code>. <code>sudo</code> is 'do this as admin'. Keeping packages fresh is the first thing to do on a new system.",
+   steps:[
+    {say:"Refresh the catalogue of available software.",cmd:"sudo apt update",out:"Downloads the latest package list (asks your password)."},
+    {say:"Install everything that has updates. <code>-y</code> auto-answers 'yes'.",cmd:"sudo apt upgrade -y",out:"Upgrades installed packages."},
+    {say:"Install a new tool to prove it works.",cmd:"sudo apt install tree -y\ntree",out:"<code>tree</code> draws your folders as a branching diagram."}
+   ],
+   trip:"<code>update</code> and <code>upgrade</code> are <b>different</b>: <code>update</code> refreshes the <i>list</i> of what's available, <code>upgrade</code> actually <i>installs</i> the newer versions. You almost always run them together: <code>sudo apt update && sudo apt upgrade -y</code>.",
+   ref:[["sudo apt update","Refresh package list"],["sudo apt upgrade -y","Install updates"],["sudo apt install x","Install package x"],["sudo apt remove x","Remove package x"]],
+   mastery:"Run the update+upgrade combo, then install <code>tree</code> and run it inside any folder.",
+   sol:`<pre><code>sudo apt update && sudo apt upgrade -y
+sudo apt install tree -y
+tree</code></pre>`,
+   link:{label:"apt package basics",url:"https://ubuntu.com/server/docs/package-management"}},
+
+  {t:"Install and configure git",
+   model:"Git is a time machine for your code: it saves snapshots ('commits') you can return to, and pushes your work to GitHub. You'll use it for your own projects and to clone the Unitree SDK later.",
+   steps:[
+    {say:"Install git.",cmd:"sudo apt install git -y\ngit --version",out:"Prints a version like git 2.43.x."},
+    {say:"Tell git who you are (it stamps every commit with this). Do this once.",cmd:'git config --global user.name "Ivan How"\ngit config --global user.email "ivanhowmk12@gmail.com"',out:"No output = success."},
+    {say:"Make your first repository and first snapshot.",cmd:'mkdir ~/first-repo && cd ~/first-repo\ngit init\necho "# My project" > README.md\ngit add README.md\ngit commit -m "First commit"',out:"git records your first commit."}
+   ],
+   trip:"<code>git add</code> then <code>git commit</code> trips everyone at first. <code>add</code> = 'stage these changes' (put them on the tray); <code>commit</code> = 'save the tray as a snapshot'. A change isn't saved until you've done both.",
+   ref:[["git init","Start tracking a folder"],["git add f","Stage a change"],["git commit -m \"...\"","Save a snapshot"],["git status","What's changed?"],["git log","See past commits"]],
+   mastery:"Install git, set your name/email, then create a folder, <code>git init</code> it, and make your first commit.",
+   sol:`<pre><code>sudo apt install git -y
+git config --global user.name "Ivan How"
+git config --global user.email "ivanhowmk12@gmail.com"
+mkdir ~/first-repo && cd ~/first-repo
+git init
+echo "# My project" &gt; README.md
+git add README.md
+git commit -m "First commit"
+git log   <span class="out"># shows your commit</span></code></pre>`,
+   link:{label:"Git first-time setup",url:"https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup"}},
+
+  {t:"Comfortable opening a terminal without panic",
+   model:"Fluency = these reflexes go automatic. This lesson is pure muscle memory: the shortcuts that make the terminal fast instead of scary.",
+   steps:[
+    {say:"Stop a command that's running or stuck.",cmd:"Ctrl + C",out:"Cancels the current command."},
+    {say:"Clear a cluttered screen.",cmd:"Ctrl + L",out:"Fresh, empty terminal (your work is untouched)."},
+    {say:"Reuse past commands instead of retyping.",cmd:"Up arrow   /   Ctrl + R",out:"Up = previous commands; Ctrl+R = search history."},
+    {say:"If WSL itself acts stuck, reset it from PowerShell.",cmd:"wsl --shutdown",out:"Stops WSL cleanly; reopen the terminal for a fresh start."}
+   ],
+   trip:"People retype long commands by hand and make typos. Don't — press <b>Up arrow</b> to bring back the last command, and <b>Tab</b> to autocomplete file names. These two habits save you more time than anything else.",
+   ref:[["Ctrl + C","Stop a command"],["Ctrl + L","Clear screen"],["Tab","Autocomplete"],["Up arrow","Previous command"],["Ctrl + R","Search history"],["man ls","Read a command's manual (q to quit)"]],
+   mastery:"Without looking it up: go home, make a folder, enter it, create a file, list it, and delete it — all from memory.",
+   sol:`<pre><code>cd
+mkdir test
+cd test
+touch file.txt   <span class="out"># touch makes an empty file</span>
+ls
+rm file.txt</code></pre><p>If that flowed without thinking, you've got the terminal basics down.</p>`,
+   link:{label:"WSL FAQ",url:"https://learn.microsoft.com/en-us/windows/wsl/faq"}}
+ ]},
+
+{id:"python",icon:"🐍",title:"Python",time:"2–4 weeks",why:"Most Unitree examples are Python first. Faster to prototype and test on the robot.",
+ resource:{label:"Official Python tutorial",url:"https://docs.python.org/3/tutorial/"},
+ tasks:[
+  {t:"Variables and data types",
+   model:"A variable is a labelled box that holds a value. You don't declare a type — Python looks at what you put in and figures it out.",
+   steps:[
+    {say:"Put a file together. Create <code>intro.py</code> with a text editor (<code>nano intro.py</code>) and add a few variables of different types.",cmd:'name = "Ivan"      # str  (text)\nage = 21           # int  (whole number)\nheight = 1.75      # float (decimal)\nis_student = True  # bool',out:""},
+    {say:"Add a list (ordered collection) and a dict (key→value), then print things.",cmd:'scores = [90, 85, 88]\nrobot = {"name": "G1", "legs": 2}\nprint(name, age, robot["name"])',out:""},
+    {say:"Run the file.",cmd:"python3 intro.py",out:"→ Ivan 21 G1"}
+   ],
+   trip:"Quotes matter. <code>age = 21</code> is a number you can do math on; <code>age = \"21\"</code> is text. Mixing them (<code>\"21\" + 1</code>) throws an error. Use numbers for math, strings for text.",
+   ref:[["str","Text: \"hello\""],["int","Whole number: 21"],["float","Decimal: 1.75"],["bool","True / False"],["list","[1, 2, 3]"],["dict","{\"k\": v}"]],
+   mastery:"Make variables for your name, age, and a list of 3 hobbies. Print them.",
+   sol:`<pre><code>name = "Ivan"
+age = 21
+hobbies = ["chess", "coding", "robotics"]
+print(name, age, hobbies)</code></pre>`,
+   link:{label:"Python data types",url:"https://docs.python.org/3/tutorial/introduction.html"}},
+
+  {t:"Conditionals: if / elif / else",
+   model:"This is how a program makes decisions — the seed of every robot behaviour ('if too close, stop'). Indentation (4 spaces) defines which lines belong to which branch.",
+   steps:[
+    {say:"Write a decision based on a value.",cmd:'battery = 35\nif battery > 80:\n    print("Full power")\nelif battery > 20:\n    print("Okay, keep going")\nelse:\n    print("Return to charge!")',out:"→ Okay, keep going"},
+    {say:"Change <code>battery</code> to 90, run again, and watch a different branch fire.",cmd:"python3 decide.py",out:"→ Full power"}
+   ],
+   trip:"Python is strict about <b>indentation</b>. Every line inside an <code>if</code> must be indented the same amount (4 spaces). Mixing tabs and spaces, or uneven indenting, throws <code>IndentationError</code>. Pick 4 spaces and stay consistent.",
+   ref:[["==","equal"],["!=","not equal"],["> < >= <=","comparisons"],["and / or / not","combine conditions"]],
+   mastery:"Write a program that reads a number and prints whether it's positive, negative, or zero.",
+   sol:`<pre><code>num = float(input("Enter a number: "))
+if num &gt; 0:
+    print("positive")
+elif num &lt; 0:
+    print("negative")
+else:
+    print("zero")</code></pre><p><code>float()</code> turns the typed text into a number so you can compare it.</p>`,
+   link:{label:"Control flow",url:"https://docs.python.org/3/tutorial/controlflow.html"}},
+
+  {t:"Loops: for and while",
+   model:"Loops repeat work. <code>for</code> walks over a collection (do this for each item); <code>while</code> repeats as long as a condition stays true. A robot's control loop is just a <code>while</code> that never ends.",
+   steps:[
+    {say:"A counting loop. <code>range(5)</code> gives 0,1,2,3,4.",cmd:'for i in range(5):\n    print("step", i)',out:"→ step 0 … step 4"},
+    {say:"Walk over a list directly.",cmd:'for hobby in ["chess", "code"]:\n    print(hobby)',out:"→ chess / code"},
+    {say:"A while loop that counts down.",cmd:"count = 3\nwhile count > 0:\n    print(count)\n    count = count - 1",out:"→ 3 / 2 / 1"}
+   ],
+   trip:"The classic <b>infinite loop</b>: in a <code>while</code>, if you forget to change the condition variable (the <code>count = count - 1</code> line), it runs forever. Press <code>Ctrl + C</code> to escape, then add the line that moves it toward the exit.",
+   ref:[["for x in seq:","Loop each item"],["range(n)","0 … n-1"],["range(a,b)","a … b-1"],["while cond:","Repeat while true"],["break","Exit the loop now"]],
+   mastery:"Use a <code>for</code> loop to print the squares of numbers 1 through 10.",
+   sol:`<pre><code>for n in range(1, 11):   <span class="out"># 1..10 (11 excluded)</span>
+    print(n, "squared is", n * n)</code></pre>`,
+   link:{label:"Loops & range",url:"https://docs.python.org/3/tutorial/controlflow.html#for-statements"}},
+
+  {t:"Functions: define, arguments, return",
+   model:"A function is a named, reusable block of code. You feed it inputs (arguments) and it can hand back a result (<code>return</code>). Write the logic once, call it everywhere.",
+   steps:[
+    {say:"Define a function that returns a value.",cmd:'def add(a, b):\n    return a + b',out:"Defines it — nothing runs yet."},
+    {say:"Call it and use the result.",cmd:'total = add(3, 4)\nprint(total)',out:"→ 7"},
+    {say:"Another, with text.",cmd:'def greet(name):\n    return "Hello, " + name\nprint(greet("Ivan"))',out:"→ Hello, Ivan"}
+   ],
+   trip:"<code>return</code> vs <code>print</code> confuses beginners. <code>print</code> just shows text on screen; <code>return</code> hands a value <i>back to your code</i> so you can store and reuse it. A function without <code>return</code> gives back <code>None</code>.",
+   ref:[["def f(x):","Define function f"],["return v","Send v back to caller"],["f(3)","Call f with argument 3"]],
+   mastery:"Write a function <code>area(width, height)</code> that returns width × height, and call it with a few values.",
+   sol:`<pre><code>def area(width, height):
+    return width * height
+
+print(area(3, 4))   <span class="out"># 12</span>
+print(area(5, 2))   <span class="out"># 10</span></code></pre>`,
+   link:{label:"Defining functions",url:"https://docs.python.org/3/tutorial/controlflow.html#defining-functions"}},
+
+  {t:"Classes and objects (OOP basics)",
+   model:"A class is a blueprint; an object is one thing built from it. This is the big one: a ROS2 node is a class, and a robot in the SDK is an object. Nail this and the next chapters feel familiar.",
+   steps:[
+    {say:"Define a blueprint with a constructor (<code>__init__</code>) and a method.",cmd:'class Robot:\n    def __init__(self, name, legs):\n        self.name = name\n        self.legs = legs\n    def walk(self):\n        print(self.name, "walks on", self.legs, "legs")',out:""},
+    {say:"Build an object from the blueprint and use it.",cmd:'g1 = Robot("G1", 2)\ng1.walk()',out:"→ G1 walks on 2 legs"}
+   ],
+   trip:"<code>self</code> baffles everyone at first. It just means 'this particular object'. Every method's first parameter is <code>self</code>, and you use <code>self.name</code> to reach that object's own data. You never pass <code>self</code> yourself — Python fills it in.",
+   ref:[["class Name:","Define a blueprint"],["__init__","Runs when you create an object"],["self.x","This object's attribute x"],["obj.method()","Call a method on an object"]],
+   mastery:"Make a <code>Dog</code> class with a name and a <code>bark()</code> method. Create two dogs and make them bark.",
+   sol:`<pre><code>class Dog:
+    def __init__(self, name):
+        self.name = name
+    def bark(self):
+        print(self.name + " says woof!")
+
+d1 = Dog("Rex")
+d2 = Dog("Bella")
+d1.bark()   <span class="out"># Rex says woof!</span>
+d2.bark()   <span class="out"># Bella says woof!</span></code></pre>`,
+   link:{label:"Classes",url:"https://docs.python.org/3/tutorial/classes.html"}},
+
+  {t:"Imports, modules, and pip",
+   model:"You don't write everything yourself. <code>import</code> pulls in code that ships with Python; <code>pip</code> installs new packages from the internet (this is how you'll later install robotics libraries).",
+   steps:[
+    {say:"Use a built-in module.",cmd:"import math\nprint(math.sqrt(16))",out:"→ 4.0"},
+    {say:"Import just one thing from a module.",cmd:"from random import randint\nprint(randint(1, 6))",out:"→ a random number 1–6"},
+    {say:"Install an external package (in the terminal, not Python).",cmd:"pip3 install numpy",out:"Downloads and installs numpy."}
+   ],
+   trip:"Best practice: make a <b>virtual environment</b> per project so packages don't collide: <code>python3 -m venv .venv && source .venv/bin/activate</code>. Your prompt shows <code>(.venv)</code> when it's active. ROS2 later has its own rules here, but for plain Python this keeps things clean.",
+   ref:[["import m","Bring in module m"],["from m import x","Bring in just x"],["import m as n","Rename on import"],["pip3 install p","Install a package"]],
+   mastery:"Install <code>numpy</code> with pip, then use it to create an array and print its sum.",
+   sol:`<p>Terminal:</p><pre><code>pip3 install numpy</code></pre><p>Python:</p><pre><code>import numpy as np
+arr = np.array([10, 20, 30, 40])
+print(arr.sum())   <span class="out"># 100</span></code></pre>`,
+   link:{label:"Modules",url:"https://docs.python.org/3/tutorial/modules.html"}},
+
+  {t:"Files and error handling",
+   model:"Programs read and write files, and things go wrong (missing file, bad input). <code>with open(...)</code> handles files safely; <code>try/except</code> catches errors so your program bends instead of crashing.",
+   steps:[
+    {say:"Write to a file. <code>\"w\"</code> = write mode; <code>with</code> auto-closes it.",cmd:'with open("log.txt", "w") as f:\n    f.write("session 1\\n")',out:"Creates log.txt with one line."},
+    {say:"Read it back.",cmd:'with open("log.txt") as f:\n    print(f.read())',out:"→ session 1"},
+    {say:"Catch an error instead of crashing.",cmd:'try:\n    value = int("not a number")\nexcept ValueError:\n    print("That was not a number!")',out:"→ That was not a number!"}
+   ],
+   trip:"Forgetting to close files causes subtle bugs. Always use <code>with open(...) as f:</code> — it closes the file for you automatically, even if an error happens mid-way. Avoid the bare <code>f = open(...)</code> style.",
+   ref:[["open(f,\"w\")","Write (overwrites)"],["open(f,\"a\")","Append"],["open(f)","Read"],["try / except","Catch an error"],[".read() / .write()","Read or write text"]],
+   mastery:"Write 3 lines to a file, read them back, then wrap a risky <code>int()</code> call in try/except.",
+   sol:`<pre><code>with open("notes.txt", "w") as f:
+    f.write("line 1\\n")
+    f.write("line 2\\n")
+    f.write("line 3\\n")
+
+with open("notes.txt") as f:
+    print(f.read())
+
+try:
+    n = int("oops")
+except ValueError:
+    print("Not a number — handled safely")</code></pre>`,
+   link:{label:"Files & errors",url:"https://docs.python.org/3/tutorial/inputoutput.html"}},
+
+  {t:"Capstone: a script that runs end-to-end",
+   model:"Tie it together: variables + a class + a loop + file I/O in one program. Build a 'robot battery tracker' that drains a battery over several steps and logs each one.",
+   steps:[
+    {say:"Define a Battery class with a method that drains it (never below 0).",cmd:"class Battery:\n    def __init__(self, level):\n        self.level = level\n    def drain(self, amount):\n        self.level = max(0, self.level - amount)",out:""},
+    {say:"Loop 5 steps, draining each time, and write every step to a file.",cmd:'bat = Battery(100)\nwith open("battery_log.txt", "w") as f:\n    for step in range(5):\n        bat.drain(15)\n        line = f"step {step}: {bat.level}%"\n        print(line)\n        f.write(line + "\\n")',out:"→ 85%, 70%, 55%, 40%, 25%"},
+    {say:"Confirm the file was written.",cmd:"cat battery_log.txt",out:"Same 5 lines saved to disk."}
+   ],
+   trip:"This combines everything — if it errors, read the message bottom-up: it names the <i>line number</i> and the <i>type</i> of error. Most beginner bugs here are indentation or a typo'd variable name. Fix one, re-run, repeat.",
+   mastery:"Build the battery tracker (or your own idea) end-to-end. Confirm the log file is written correctly.",
+   sol:`<pre><code>class Battery:
+    def __init__(self, level):
+        self.level = level
+    def drain(self, amount):
+        self.level = max(0, self.level - amount)
+
+bat = Battery(100)
+with open("battery_log.txt", "w") as f:
+    for step in range(5):
+        bat.drain(15)
+        line = f"step {step}: {bat.level}%"
+        print(line)
+        f.write(line + "\\n")</code></pre><p>Output: 85, 70, 55, 40, 25. Confirm with <code>cat battery_log.txt</code>.</p>`,
+   link:{label:"Python tutorial index",url:"https://docs.python.org/3/tutorial/"}}
+ ]},
+
+{id:"ros2",icon:"🔗",title:"ROS2 Humble",time:"3–5 weeks (alongside Python)",why:"Start after basic Python — the tutorials use Python heavily. This is how robot software talks to itself.",
+ resource:{label:"ROS2 Humble installation guide",url:"https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html"},
+ tasks:[
+  {t:"Install ROS2 Humble on Ubuntu 22.04",
+   model:"ROS2 Humble Hawksbill is the Long-Term Support (LTS) release that targets Ubuntu 22.04 exactly. It receives security updates until 2027. The install process adds the ROS2 apt repository to Ubuntu, then installs the full desktop suite.",
+   steps:[
+    {say:"Set your locale (Humble requires UTF-8).",cmd:"sudo apt update && sudo apt install -y locales\nsudo locale-gen en_US en_US.UTF-8\nsudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8\nexport LANG=en_US.UTF-8",out:"No errors = locale is set."},
+    {say:"Add the ROS2 apt repository and its signing key.",cmd:"sudo apt install -y software-properties-common curl\nsudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \\\n  -o /usr/share/keyrings/ros-archive-keyring.gpg\necho \"deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \\\n  http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main\" \\\n  | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null",out:"Adds the official ROS2 package source."},
+    {say:"Install ROS2 Humble Desktop (includes rviz, rqt, demo nodes).",cmd:"sudo apt update\nsudo apt upgrade -y\nsudo apt install -y ros-humble-desktop",out:"Large download (~500 MB). Takes a few minutes."},
+    {say:"Source the setup file and verify.",cmd:"source /opt/ros/humble/setup.bash\nros2 run demo_nodes_cpp talker",out:"→ Publishing: 'Hello World: 1' … confirms it works."},
+    {say:"Add the source line to your <code>~/.bashrc</code> so it loads in every new terminal.",cmd:"echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc\nsource ~/.bashrc",out:"From now on, any new terminal has ROS2 ready."}
+   ],
+   trip:"If <code>ros2: command not found</code> appears, you opened a new terminal and forgot to source. After adding to <code>~/.bashrc</code> in step 5 that's automatic. If the apt key step fails, check your internet connection — WSL shares Windows networking, so confirm a browser works first.",
+   ref:[["source /opt/ros/humble/setup.bash","Load ROS2 (every terminal, or add to .bashrc)"],["ros2 --version","Confirm install succeeded"],["sudo apt install ros-humble-<pkg>","Add extra ROS2 packages"],["~/.bashrc","Shell startup file — edits take effect in new terminals"]],
+   mastery:"Install ROS2 Humble, add the source line to <code>~/.bashrc</code>, open a fresh terminal, and run the talker demo successfully.",
+   sol:`<pre><code><span class="out"># Steps 1–5 above, then open a fresh terminal:</span>
+ros2 run demo_nodes_cpp talker
+<span class="out"># → Publishing: 'Hello World: 1' (every second)</span>
+<span class="out"># Ctrl+C to stop</span></code></pre><p>If it works in a fresh terminal without manually sourcing, the .bashrc line is set correctly.</p>`,
+   link:{label:"ROS2 Humble install (official)",url:"https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html"}},
+
+  {t:"Concepts: nodes and the graph",
+   model:"A robot's software is a team of small programs called <b>nodes</b>, each with one job (read camera, balance, drive a motor). Together they form the <b>graph</b>. They cooperate without knowing each other directly.",
+   steps:[
+    {say:"Load ROS2 into your terminal. You do this in EVERY new terminal.",cmd:"source /opt/ros/humble/setup.bash",out:"No output = loaded."},
+    {say:"Run a demo node that publishes messages.",cmd:"ros2 run demo_nodes_cpp talker",out:"→ Publishing: 'Hello World: 1' …"},
+    {say:"In a SECOND terminal (source again), run a node that receives them.",cmd:"ros2 run demo_nodes_py listener",out:"→ I heard: 'Hello World: 1' …"},
+    {say:"In a third terminal, list what's running.",cmd:"ros2 node list",out:"→ /talker  /listener"}
+   ],
+   trip:"The #1 ROS2 beginner mistake: forgetting to <code>source /opt/ros/humble/setup.bash</code> in each new terminal. If <code>ros2: command not found</code> appears, that's it — source it and try again. (Tip: add that line to your <code>~/.bashrc</code> so it runs automatically.)",
+   ref:[["source .../setup.bash","Load ROS2 (every terminal)"],["ros2 run pkg node","Run a node"],["ros2 node list","List running nodes"]],
+   mastery:"Run the talker and listener demo in two terminals and watch them communicate. Then run <code>ros2 node list</code>.",
+   sol:`<pre><code><span class="out"># terminal 1</span>
+source /opt/ros/humble/setup.bash
+ros2 run demo_nodes_cpp talker
+<span class="out"># terminal 2</span>
+source /opt/ros/humble/setup.bash
+ros2 run demo_nodes_py listener
+<span class="out"># terminal 3</span>
+ros2 node list   <span class="out"># /talker  /listener</span></code></pre>`,
+   link:{label:"Nodes tutorial",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Nodes/Understanding-ROS2-Nodes.html"}},
+
+  {t:"Topics: how data flows",
+   model:"Nodes share data over named channels called <b>topics</b>. One node publishes; others subscribe. Like a radio station — broadcast on a frequency, anyone tuned in hears it. No direct connection needed.",
+   steps:[
+    {say:"With the talker running, list active topics.",cmd:"ros2 topic list",out:"→ /chatter  (among others)"},
+    {say:"Watch the actual messages stream by.",cmd:"ros2 topic echo /chatter",out:"→ data: 'Hello World: 1' (then 2, 3…)"},
+    {say:"Inspect a topic's type and how fast it's publishing.",cmd:"ros2 topic info /chatter\nros2 topic hz /chatter",out:"Shows message type + publish rate."}
+   ],
+   trip:"A publisher and subscriber only connect if they use the <b>same topic name AND the same message type</b>. If echo shows nothing, check the names match exactly (it's case-sensitive) — a typo'd topic name silently fails to connect.",
+   ref:[["ros2 topic list","All topics"],["ros2 topic echo /t","Print messages"],["ros2 topic info /t","Type + counts"],["ros2 topic hz /t","Publish rate"]],
+   mastery:"With the talker running, list topics, then <code>echo</code> the chatter topic to watch messages stream by.",
+   sol:`<pre><code>ros2 topic list           <span class="out"># /chatter appears</span>
+ros2 topic echo /chatter
+<span class="out"># → data: 'Hello World: 1'  (then 2, 3, ...)</span></code></pre>`,
+   link:{label:"Topics tutorial",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html"}},
+
+  {t:"Write a Publisher node (Python)",
+   model:"Now you write a node. It's a Python class that inherits from <code>Node</code> (remember classes?) and publishes a message on a timer. This is your first piece of real robot software.",
+   steps:[
+    {say:"Create <code>talker.py</code>. Set up the node, a publisher, and a 1-second timer.",cmd:'import rclpy\nfrom rclpy.node import Node\nfrom std_msgs.msg import String\n\nclass Talker(Node):\n    def __init__(self):\n        super().__init__("talker")\n        self.pub = self.create_publisher(String, "chatter", 10)\n        self.create_timer(1.0, self.tick)',out:""},
+    {say:"Add the timer callback that builds and publishes a message, plus the main entry point.",cmd:'    def tick(self):\n        msg = String()\n        msg.data = "hello from Ivan"\n        self.pub.publish(msg)\n\ndef main():\n    rclpy.init()\n    rclpy.spin(Talker())\n\nif __name__ == "__main__":\n    main()',out:""},
+    {say:"Run it, and confirm from another terminal.",cmd:"python3 talker.py\n# other terminal:\nros2 topic echo /chatter",out:"→ data: 'hello from Ivan'"}
+   ],
+   trip:"<code>rclpy.spin()</code> keeps the node alive so the timer keeps firing — without it the program would set up and immediately exit. Recognise the shape: it's exactly the Python class + method pattern from the Python chapter.",
+   ref:[["rclpy.init()","Start ROS2"],["create_publisher(T,name,q)","Make a publisher"],["create_timer(s, fn)","Call fn every s seconds"],["rclpy.spin(node)","Keep node alive"]],
+   mastery:"Type out this publisher, run it, and confirm with <code>ros2 topic echo /chatter</code> in another terminal.",
+   sol:`<pre><code>import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+class Talker(Node):
+    def __init__(self):
+        super().__init__("talker")
+        self.pub = self.create_publisher(String, "chatter", 10)
+        self.create_timer(1.0, self.tick)
+    def tick(self):
+        msg = String(); msg.data = "hello from Ivan"
+        self.pub.publish(msg)
+
+def main():
+    rclpy.init(); rclpy.spin(Talker())
+if __name__ == "__main__":
+    main()</code></pre>`,
+   link:{label:"Writing a publisher",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html"}},
+
+  {t:"Write a Subscriber node (Python)",
+   model:"The mirror image of a publisher: subscribe to a topic and run a callback every time a message arrives. Publisher + subscriber together = a complete conversation.",
+   steps:[
+    {say:"Create <code>listener.py</code>. Subscribe to the same topic and register a callback.",cmd:'import rclpy\nfrom rclpy.node import Node\nfrom std_msgs.msg import String\n\nclass Listener(Node):\n    def __init__(self):\n        super().__init__("listener")\n        self.create_subscription(String, "chatter", self.on_msg, 10)\n    def on_msg(self, msg):\n        self.get_logger().info("Got: " + msg.data)',out:""},
+    {say:"Add the main entry point, then run talker and listener together.",cmd:"def main():\n    rclpy.init(); rclpy.spin(Listener())\n\n# run both:\npython3 talker.py    # terminal 1\npython3 listener.py  # terminal 2",out:"→ [INFO] Got: hello from Ivan"}
+   ],
+   trip:"The subscriber must use the <b>same topic name and message type</b> as the publisher (<code>String</code>, <code>\"chatter\"</code>). Mismatch = silence, no error. When 'nothing happens', that's the first thing to check.",
+   ref:[["create_subscription(T,name,cb,q)","Subscribe + set callback"],["callback(self,msg)","Runs per message"],["get_logger().info()","Print a log line"]],
+   mastery:"Run your publisher and this subscriber together. Confirm the listener logs each message.",
+   sol:`<pre><code>python3 talker.py      <span class="out"># terminal 1</span>
+python3 listener.py    <span class="out"># terminal 2 → Got: hello from Ivan</span></code></pre><p>The callback fires once per message the talker publishes.</p>`,
+   link:{label:"Writing a subscriber",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html"}},
+
+  {t:"Services and parameters",
+   model:"Topics stream continuously. <b>Services</b> are request→response (ask once, get one answer — like a function call across nodes). <b>Parameters</b> are tunable settings on a node (e.g. a max speed you can change while it runs).",
+   steps:[
+    {say:"Start a node that offers a service.",cmd:"ros2 run demo_nodes_cpp add_two_ints_server",out:"Provides the /add_two_ints service."},
+    {say:"Call the service from the command line.",cmd:'ros2 service call /add_two_ints example_interfaces/srv/AddTwoInts "{a: 2, b: 3}"',out:"→ response: sum=5"},
+    {say:"List and read parameters on a node.",cmd:"ros2 param list\nros2 param get /some_node max_speed",out:"Shows tunable settings + values."}
+   ],
+   trip:"Don't reach for a service when you need a stream (or vice versa). Rule of thumb: continuous data (sensor readings, commands) = <b>topic</b>; one-off request that needs an answer (e.g. 'compute this') = <b>service</b>.",
+   ref:[["ros2 service list","List services"],["ros2 service call /s type \"{...}\"","Call a service"],["ros2 param list","List parameters"],["ros2 param set /n p v","Set a parameter"]],
+   mastery:"List services and parameters in a running demo, and call one service from the command line.",
+   sol:`<pre><code>ros2 run demo_nodes_cpp add_two_ints_server   <span class="out"># terminal 1</span>
+ros2 service list
+ros2 service call /add_two_ints example_interfaces/srv/AddTwoInts "{a: 2, b: 3}"
+<span class="out"># → sum=5</span>
+ros2 param list</code></pre>`,
+   link:{label:"Services tutorial",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html"}},
+
+  {t:"Build a package with colcon",
+   model:"Real ROS2 code lives in <b>packages</b> inside a <b>workspace</b>, compiled with <code>colcon</code>. This is the structure every robot project (including the SDK demos) uses.",
+   steps:[
+    {say:"Make a workspace and create a package inside its <code>src</code> folder.",cmd:"mkdir -p ~/ros2_ws/src && cd ~/ros2_ws/src\nros2 pkg create --build-type ament_python my_pkg",out:"Scaffolds a package named my_pkg."},
+    {say:"Put your <code>talker.py</code> in <code>my_pkg/my_pkg/</code> and register it in <code>setup.py</code> under console_scripts.",cmd:"# in setup.py entry_points:\n'talker = my_pkg.talker:main',",out:""},
+    {say:"Build, load, and run.",cmd:"cd ~/ros2_ws\ncolcon build\nsource install/setup.bash\nros2 run my_pkg talker",out:"Your node runs from the package."}
+   ],
+   trip:"After every <code>colcon build</code> you must <code>source install/setup.bash</code> again, or ROS2 won't see your new build. 'My changes aren't showing up' almost always = forgot to rebuild or re-source. Also: always run <code>colcon build</code> from the workspace root, not <code>src</code>.",
+   ref:[["ros2 pkg create","Make a package"],["colcon build","Compile the workspace"],["source install/setup.bash","Load your packages"],["ros2 run pkg node","Run from package"]],
+   mastery:"Create a workspace and package, move your publisher into it, build with colcon, and run it via <code>ros2 run</code>.",
+   sol:`<pre><code>mkdir -p ~/ros2_ws/src && cd ~/ros2_ws/src
+ros2 pkg create --build-type ament_python my_pkg
+<span class="out"># put talker.py in my_pkg/my_pkg/, register in setup.py:</span>
+<span class="out">#   'talker = my_pkg.talker:main',</span>
+cd ~/ros2_ws
+colcon build
+source install/setup.bash
+ros2 run my_pkg talker</code></pre>`,
+   link:{label:"Creating a package",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Creating-Your-First-ROS2-Package.html"}},
+
+  {t:"Visualize with rqt_graph and echo",
+   model:"Seeing the graph makes everything click. <code>rqt_graph</code> draws every node and the topics connecting them — debugging becomes 'spot the missing arrow'.",
+   steps:[
+    {say:"Run your publisher and subscriber.",cmd:"python3 talker.py\npython3 listener.py",out:"Both running."},
+    {say:"Open the visual graph.",cmd:"rqt_graph",out:"A window: /talker → /chatter → /listener."},
+    {say:"Cross-check from the command line.",cmd:"ros2 node info /talker",out:"Lists what the node publishes/subscribes."}
+   ],
+   trip:"If your nodes don't appear connected in rqt_graph, click the <b>refresh (↻)</b> button top-left — it doesn't auto-update. If there's still no arrow between them, your publisher and subscriber topic names don't match.",
+   ref:[["rqt_graph","Visual node/topic map"],["↻ refresh","Update the graph"],["ros2 node info /n","Node's pubs/subs"]],
+   mastery:"Run your publisher + subscriber, open <code>rqt_graph</code>, and find your two nodes connected by the topic.",
+   sol:`<pre><code>python3 talker.py
+python3 listener.py
+rqt_graph   <span class="out"># /talker → /chatter → /listener</span></code></pre><p>No connection? Click ↻ refresh, then verify the topic names match exactly.</p>`,
+   link:{label:"rqt_graph",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html"}},
+
+  {t:"Capstone: a complete pub/sub system",
+   model:"Prove you can build a working ROS2 system from scratch: a sensor node that publishes a changing value, and a reactor node that responds when it crosses a threshold. This is the sense→decide→act loop you'll run on the G1.",
+   steps:[
+    {say:"Sensor node — publish a random 'distance' each second.",cmd:'import rclpy, random\nfrom rclpy.node import Node\nfrom std_msgs.msg import Float32\nclass Sensor(Node):\n    def __init__(self):\n        super().__init__("sensor")\n        self.pub = self.create_publisher(Float32, "distance", 10)\n        self.create_timer(1.0, self.tick)\n    def tick(self):\n        m = Float32(); m.data = random.uniform(0,100)\n        self.pub.publish(m)',out:""},
+    {say:"Reactor node — subscribe and warn when the value is too low.",cmd:'class Reactor(Node):\n    def __init__(self):\n        super().__init__("reactor")\n        self.create_subscription(Float32, "distance", self.on, 10)\n    def on(self, msg):\n        if msg.data < 20:\n            self.get_logger().warn("STOP — obstacle close!")\n        else:\n            self.get_logger().info("GO")',out:""},
+    {say:"Register both in your package, build, and run them together.",cmd:"colcon build && source install/setup.bash\nros2 run my_pkg sensor\nros2 run my_pkg reactor",out:"Reactor flips GO/STOP as values cross 20."}
+   ],
+   trip:"Keep the two nodes in the same package and double-check both use the topic name <code>\"distance\"</code> and type <code>Float32</code>. This 'sense → decide → act' shape is the single most important pattern in the whole course — you'll reuse it on the real robot.",
+   mastery:"Build and run the full sensor→reactor system in your own package. Confirm it works end-to-end.",
+   sol:`<p>Both nodes above, registered in <code>setup.py</code>, then:</p><pre><code>colcon build
+source install/setup.bash
+ros2 run my_pkg sensor    <span class="out"># terminal 1</span>
+ros2 run my_pkg reactor   <span class="out"># terminal 2</span></code></pre><p>Watch the reactor switch between GO and STOP as the random distance crosses 20.</p>`,
+   link:{label:"Beginner tutorials hub",url:"https://docs.ros.org/en/humble/Tutorials.html"}}
+ ]},
+
+{id:"cpp",icon:"⚙️",title:"C++",time:"ongoing (after ROS2 basics)",why:"Needed for low-level motor control and performance. unitree_sdk2 is C++ based.",
+ resource:{label:"learncpp.com",url:"https://www.learncpp.com/"},
+ tasks:[
+  {t:"Compile and run a hello-world",
+   model:"Unlike Python, C++ must be <b>compiled</b> into a binary before it runs. That extra build step is the price of C++'s speed — and it's the workflow the whole SDK uses.",
+   steps:[
+    {say:"Install the compiler.",cmd:"sudo apt install build-essential -y",out:"Gives you g++ (the C++ compiler)."},
+    {say:"Write <code>hello.cpp</code>.",cmd:'#include <iostream>\nint main() {\n    std::cout << "Hello, C++!" << std::endl;\n    return 0;\n}',out:""},
+    {say:"Compile it into a program, then run that program.",cmd:"g++ hello.cpp -o hello\n./hello",out:"→ Hello, C++!"}
+   ],
+   trip:"Two-step trap: editing <code>hello.cpp</code> does nothing until you <b>recompile</b>. If your change isn't showing, you forgot to re-run <code>g++</code>. Python runs source directly; C++ runs the compiled binary, so: edit → compile → run, every time.",
+   ref:[["g++ f.cpp -o name","Compile into 'name'"],["./name","Run the compiled program"],["#include <x>","Pull in a library"]],
+   mastery:"Install build-essential, write hello.cpp, compile it, and run the binary.",
+   sol:`<pre><code>sudo apt install build-essential -y
+g++ hello.cpp -o hello
+./hello   <span class="out"># Hello, C++!</span></code></pre>`,
+   link:{label:"Your first program",url:"https://www.learncpp.com/cpp-tutorial/introduction-to-cpp-development/"}},
+
+  {t:"Types, variables, pointers & references",
+   model:"C++ makes you state types explicitly. The new idea vs Python: a <b>pointer</b> holds a memory address, and a <b>reference</b> is a nickname for an existing variable. This is how you pass big data around without copying it.",
+   steps:[
+    {say:"Declare with explicit types.",cmd:"int age = 21;\ndouble height = 1.75;",out:"Each variable's type is fixed."},
+    {say:"A pointer stores the address of <code>age</code>; <code>*</code> reads the value there.",cmd:"int* p = &age;\nstd::cout << *p;   // 21",out:"→ 21"},
+    {say:"A reference is another name for the same variable.",cmd:"int& ref = age;\nref = 30;          // age is now 30",out:"Changing ref changes age."}
+   ],
+   trip:"<code>&</code> and <code>*</code> flip meaning by context: in a declaration <code>int* p</code> / <code>int& r</code> they mean 'pointer'/'reference'; in an expression <code>&age</code> means 'address of' and <code>*p</code> means 'value at'. Read declarations and expressions separately and it stops being confusing.",
+   ref:[["int x","A value"],["int* p = &x","Pointer to x"],["*p","Value p points to"],["int& r = x","Reference (alias) to x"]],
+   mastery:"Make an int, a pointer to it, and a reference. Change the value through each and print it.",
+   sol:`<pre><code>#include &lt;iostream&gt;
+int main() {
+    int age = 21;
+    int* p = &amp;age;
+    int&amp; ref = age;
+    *p = 25;   std::cout &lt;&lt; age &lt;&lt; "\\n";   <span class="out">// 25</span>
+    ref = 30;  std::cout &lt;&lt; age &lt;&lt; "\\n";   <span class="out">// 30</span>
+}</code></pre>`,
+   link:{label:"Pointers",url:"https://www.learncpp.com/cpp-tutorial/introduction-to-pointers/"}},
+
+  {t:"Functions and headers (.h / .cpp)",
+   model:"C++ splits code in two: a <b>header</b> (<code>.h</code>) declares what exists; a <b>source</b> file (<code>.cpp</code>) defines how it works. Big projects (like the SDK) stay organized this way.",
+   steps:[
+    {say:"Declare functions in <code>math.h</code>.",cmd:"int add(int a, int b);\nint multiply(int a, int b);",out:"Just the signatures."},
+    {say:"Define them in <code>math.cpp</code>.",cmd:'#include "math.h"\nint add(int a, int b) { return a + b; }\nint multiply(int a, int b) { return a * b; }',out:""},
+    {say:"Use them from <code>main.cpp</code> and compile all sources together.",cmd:'#include <iostream>\n#include "math.h"\nint main() { std::cout << add(2,3); }\n// then:\ng++ main.cpp math.cpp -o app',out:"→ 5"}
+   ],
+   trip:"You must list <b>every</b> .cpp file when compiling: <code>g++ main.cpp math.cpp -o app</code>. Forgetting one gives an 'undefined reference' linker error — the compiler knows the function exists (from the header) but can't find its body. That's your cue to add the missing .cpp.",
+   ref:[["// .h","Declarations (what exists)"],["// .cpp","Definitions (how it works)"],["#include \"math.h\"","Use your own header"],["g++ a.cpp b.cpp -o app","Compile multiple files"]],
+   mastery:"Split an <code>add</code> and <code>multiply</code> function into math.h/math.cpp, use them from main.cpp, and compile.",
+   sol:`<p><code>math.h</code> → declarations, <code>math.cpp</code> → definitions, <code>main.cpp</code> → uses them:</p><pre><code>g++ main.cpp math.cpp -o app && ./app</code></pre>`,
+   link:{label:"Header files",url:"https://www.learncpp.com/cpp-tutorial/header-files/"}},
+
+  {t:"Classes, constructors, methods",
+   model:"Same idea as Python classes, stricter syntax. You add <code>public</code>/<code>private</code> to control what the outside world can touch — this is encapsulation, and the SDK uses it everywhere.",
+   steps:[
+    {say:"Define a class with a constructor and a method.",cmd:'class Robot {\npublic:\n    Robot(std::string n) : name(n) {}\n    void walk() { std::cout << name << " walks\\n"; }\nprivate:\n    std::string name;\n};',out:""},
+    {say:"Create an object and call its method.",cmd:'Robot g1("G1");\ng1.walk();',out:"→ G1 walks"}
+   ],
+   trip:"The <code>Robot(std::string n) : name(n) {}</code> bit is a 'member initializer list' — it sets <code>name</code> from <code>n</code>. And don't forget the <b>semicolon after the closing brace</b> of a class (<code>};</code>) — leaving it off is the single most common C++ class error.",
+   ref:[["public:","Accessible from outside"],["private:","Hidden inside the class"],["Class() : x(v) {}","Constructor + init list"],["obj.method()","Call a method"]],
+   mastery:"Write a <code>Counter</code> class with a private count, an <code>increment()</code> method, and a <code>get()</code> method.",
+   sol:`<pre><code>#include &lt;iostream&gt;
+class Counter {
+public:
+    void increment() { count_++; }
+    int get() { return count_; }
+private:
+    int count_ = 0;
+};
+int main() {
+    Counter c; c.increment(); c.increment();
+    std::cout &lt;&lt; c.get() &lt;&lt; "\\n";   <span class="out">// 2</span>
+}</code></pre>`,
+   link:{label:"Classes intro",url:"https://www.learncpp.com/cpp-tutorial/introduction-to-classes/"}},
+
+  {t:"Standard library: vector, string, map",
+   model:"The STL gives you ready-made containers so you don't reinvent them. <code>vector</code> = resizable array, <code>string</code> = text, <code>map</code> = key→value (C++'s version of a Python dict).",
+   steps:[
+    {say:"A vector you can grow.",cmd:"std::vector<int> nums = {1, 2, 3};\nnums.push_back(4);",out:"nums is now {1,2,3,4}."},
+    {say:"A map from text to number.",cmd:'std::map<std::string,int> legs;\nlegs["G1"] = 2;',out:"legs[\"G1\"] == 2"},
+    {say:"Loop over a vector the modern way.",cmd:'for (int n : nums) std::cout << n << " ";',out:"→ 1 2 3 4"}
+   ],
+   trip:"Remember the includes — <code>#include &lt;vector&gt;</code>, <code>&lt;string&gt;</code>, <code>&lt;map&gt;</code> — each container needs its header. A 'vector was not declared' error just means you forgot the include at the top.",
+   ref:[["vector<T>","Resizable array"],[".push_back(x)","Add to end"],["map<K,V>","Key→value store"],["for (T x : v)","Range-based loop"]],
+   mastery:"Make a vector of 5 numbers, loop over it to compute the sum, and store the result in a map.",
+   sol:`<pre><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+int main() {
+    std::vector&lt;int&gt; nums = {10,20,30,40,50};
+    int sum = 0;
+    for (int n : nums) sum += n;
+    std::map&lt;std::string,int&gt; r; r["sum"] = sum;
+    std::cout &lt;&lt; r["sum"] &lt;&lt; "\\n";   <span class="out">// 150</span>
+}</code></pre>`,
+   link:{label:"std::vector",url:"https://www.learncpp.com/cpp-tutorial/introduction-to-stdvector-and-list-constructors/"}},
+
+  {t:"CMake basics: build a project",
+   model:"Typing <code>g++ a.cpp b.cpp ...</code> by hand gets painful fast. <b>CMake</b> describes your build once, then one command compiles everything. ROS2 and unitree_sdk2 are both built this way.",
+   steps:[
+    {say:"Write a <code>CMakeLists.txt</code> next to your code.",cmd:"cmake_minimum_required(VERSION 3.10)\nproject(MyApp)\nadd_executable(app main.cpp math.cpp)",out:"Describes how to build 'app'."},
+    {say:"Generate build files in a separate <code>build/</code> folder.",cmd:"mkdir build && cd build\ncmake ..",out:"Reads ../CMakeLists.txt."},
+    {say:"Compile and run.",cmd:"make\n./app",out:"Builds and runs your program."}
+   ],
+   trip:"Always build in a separate <code>build/</code> directory (the 'out-of-source' build) and run <code>cmake ..</code> pointing back up at the CMakeLists. This keeps generated junk out of your source folder — exactly the pattern you'll use to build the SDK.",
+   ref:[["add_executable(app ...)","Define a program"],["cmake ..","Generate build files"],["make","Compile"],["./app","Run"]],
+   mastery:"Take your multi-file project from the headers lesson and build it with a CMakeLists.txt instead of calling g++ directly.",
+   sol:`<pre><code><span class="out"># CMakeLists.txt</span>
+cmake_minimum_required(VERSION 3.10)
+project(MyApp)
+add_executable(app main.cpp math.cpp)</code></pre><pre><code>mkdir build && cd build
+cmake .. && make && ./app</code></pre>`,
+   link:{label:"CMake tutorial",url:"https://cmake.org/cmake/help/latest/guide/tutorial/index.html"}},
+
+  {t:"Capstone: write a ROS2 C++ node",
+   model:"Bridge both worlds — rebuild your Python publisher in C++. Same shape (a Node class with a timer), different syntax. This is the exact skill the SDK demands.",
+   steps:[
+    {say:"Create an <code>ament_cmake</code> package and add <code>talker.cpp</code> in <code>src/</code>.",cmd:"cd ~/ros2_ws/src\nros2 pkg create --build-type ament_cmake my_cpp_pkg --dependencies rclcpp std_msgs",out:""},
+    {say:"Write the node: a class publishing a String on a 1s timer.",cmd:'#include "rclcpp/rclcpp.hpp"\n#include "std_msgs/msg/string.hpp"\nclass Talker : public rclcpp::Node {\npublic:\n  Talker() : Node("talker") {\n    pub_ = create_publisher<std_msgs::msg::String>("chatter", 10);\n    timer_ = create_wall_timer(std::chrono::seconds(1), [this](){\n      std_msgs::msg::String m; m.data = "hi from C++";\n      pub_->publish(m);\n    });\n  }\nprivate:\n  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_;\n  rclcpp::TimerBase::SharedPtr timer_;\n};',out:""},
+    {say:"Register it in CMakeLists.txt, build, and verify.",cmd:"colcon build && source install/setup.bash\nros2 run my_cpp_pkg talker\nros2 topic echo /chatter",out:"→ data: 'hi from C++'"}
+   ],
+   trip:"For C++ packages you wire things up in <b>CMakeLists.txt</b> (not setup.py): <code>add_executable</code>, <code>ament_target_dependencies(... rclcpp std_msgs)</code>, and an <code>install(TARGETS ...)</code> line. Forgetting the install line means <code>ros2 run</code> can't find your node.",
+   mastery:"Build and run this C++ publisher in a colcon package, and verify with <code>ros2 topic echo /chatter</code>.",
+   sol:`<p>Key CMakeLists.txt lines:</p><pre><code>find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+add_executable(talker src/talker.cpp)
+ament_target_dependencies(talker rclcpp std_msgs)
+install(TARGETS talker DESTINATION lib/\${PROJECT_NAME})</code></pre><pre><code>cd ~/ros2_ws && colcon build
+source install/setup.bash
+ros2 run my_cpp_pkg talker
+ros2 topic echo /chatter   <span class="out"># "hi from C++"</span></code></pre>`,
+   link:{label:"C++ pub/sub tutorial",url:"https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Cpp-Publisher-And-Subscriber.html"}}
+ ]},
+
+{id:"aiml",icon:"🧠",title:"AI/ML Concepts",time:"read-up (1–2 days)",why:"Understand the AI landscape your robot will operate in — VLAs, LLMs, and local inference tools that bridge robotics with modern AI.",
+ resource:{label:"NVIDIA Isaac Lab — locomotion policy blog",url:"https://developer.nvidia.com/blog/train-a-quadruped-locomotion-policy-and-simulate-cloth-manipulation-with-nvidia-isaac-lab-and-newton/"},
+ tasks:[
+  {t:"Machine Learning, VLM, and VLA — what they are and why they matter",
+   model:"<b>ML</b> teaches computers to improve from data instead of explicit rules. <b>VLMs</b> (Vision-Language Models) take images and text → produce text. <b>VLAs</b> (Vision-Language-Action models) take images and text → produce robot <i>actions</i>. A VLA is a robot brain that sees the world and decides what to do next.",
+   steps:[
+    {say:"Classic ML: train a function on data so it generalises to new inputs. Neural networks, image classifiers, reinforcement learning — all ML. The robot improves by experience, not by a programmer typing every rule.",cmd:"",out:""},
+    {say:"VLM (e.g. GPT-4V, LLaVA): give it an image + a text question → get a text answer. 'What is on the table?' → 'A red cup and a pen.' Useful for perception, not directly for motion.",cmd:"",out:""},
+    {say:"VLA (e.g. RT-2, OpenVLA, UniFolm-VLA): give it an image + a language command → get a robot action (joint angles, velocity). 'Pick up the red cup' → motor commands. This is the key leap for humanoid control.",cmd:"",out:""},
+    {say:"Read the NVIDIA Isaac Lab blog (resource link above) to see a real training pipeline: simulate → train policy with RL → deploy to physical robot.",cmd:"",out:""}
+   ],
+   trip:"VLA outputs are predictions, not guaranteed correct actions. The model generalises to situations it <i>saw during training</i>. For safety on the G1, always wrap VLA outputs through a safety clamp layer and test in simulation before physical deployment.",
+   ref:[["ML","Learns patterns from data, improves with experience"],["VLM","Image + text → text (describes, answers)"],["VLA","Image + text → action (drives the robot)"],["Policy","The learned function: observation → action"],["RL","Reinforcement Learning — learn by reward signal"],["Sim-to-real","Train in simulation, deploy to physical robot"]],
+   mastery:"In your own words: what's the difference between a VLM and a VLA? Give one concrete example of each being used on a humanoid robot.",
+   sol:`<p><b>VLM</b>: takes image + text → produces text. Example: point a camera at a table and ask "what objects are present?" — the VLM returns a description. Useful for perception and scene understanding.</p>
+<p><b>VLA</b>: takes image + text → produces a robot action (joint positions, velocity commands). Example: "pick up the cup" → the VLA outputs a wrist trajectory to grasp it. The robot <em>acts</em> on what it sees.</p>
+<p>A humanoid robot pipeline might use: VLM to understand the scene, then VLA to execute the action.</p>`,
+   link:{label:"NVIDIA Isaac Lab blog",url:"https://developer.nvidia.com/blog/train-a-quadruped-locomotion-policy-and-simulate-cloth-manipulation-with-nvidia-isaac-lab-and-newton/"}},
+
+  {t:"LeRobot and UniFolm-VLA — robot AI you can actually use",
+   model:"<b>LeRobot</b> (Hugging Face) is an open-source framework for real-robot learning: pre-trained policies, datasets from real robots, and fine-tuning tooling. <b>UniFolm-VLA</b> (Unitree) is a VLA specifically trained for Unitree humanoid bodies — a pre-built brain for the G1.",
+   steps:[
+    {say:"LeRobot provides: pre-trained robot policies, standardised dataset format for recording demonstrations, and code to fine-tune those policies for your specific task — all open-source.",cmd:"",out:""},
+    {say:"UniFolm-VLA by Unitree Robotics is a VLA fine-tuned on Unitree humanoid robot data. It takes camera images + a language command and outputs action tokens the G1 can execute.",cmd:"",out:""},
+    {say:"The key workflow: (1) collect demonstrations on your G1 for a specific task, (2) format them as a LeRobot dataset, (3) fine-tune UniFolm-VLA on those demos, (4) run inference on the G1 through the SDK.",cmd:"",out:""},
+    {say:"Browse the UniFolm-VLA GitHub repo (resource link) to see the model architecture, how demonstrations are formatted, and how to run inference.",cmd:"",out:""}
+   ],
+   trip:"You don't need to train from scratch. Fine-tuning a pre-trained VLA on 50–200 demonstrations of your task is practical on a workstation with a single GPU. Training from scratch requires a cluster and millions of samples — not feasible for a single robot project.",
+   ref:[["LeRobot","Hugging Face's open-source robot learning framework"],["UniFolm-VLA","Unitree's VLA for humanoid robots (G1 compatible)"],["Fine-tuning","Adapt a pre-trained model to a new task with small data"],["Demonstration","One recording of a human teleoperation completing the task"],["Inference","Run the trained model to produce actions in real time"]],
+   mastery:"What is the difference between training from scratch and fine-tuning, and why does fine-tuning matter when you have one G1 and limited time?",
+   sol:`<p><b>Training from scratch</b>: random weights → trained on millions of robot samples. Needs GPU clusters, weeks of compute. Not realistic for one robot.</p>
+<p><b>Fine-tuning</b>: start from UniFolm-VLA's pre-trained weights, then train on your specific task data (50–200 teleoperated demos). Fast (hours to a day), runs on a single workstation GPU.</p>
+<p>Result: a model that already knows how a Unitree humanoid body works, now specialised to pick up the object you care about in your environment.</p>`,
+   link:{label:"UniFolm-VLA on GitHub",url:"https://github.com/unitreerobotics/unifolm-vla"}},
+
+  {t:"What is an LLM (Large Language Model)?",
+   model:"An LLM is a very large neural network trained on vast amounts of text. It predicts what token comes next — but at scale, this becomes reasoning, code generation, and conversation. GPT-4, Claude, and Llama are all LLMs.",
+   steps:[
+    {say:"Core mechanism: predict the next token. Trained on internet-scale text, billions of parameters, the model learns syntax, facts, and reasoning patterns as side effects of that prediction task.",cmd:"",out:""},
+    {say:"Key properties to know: <b>context window</b> (how much text it reads at once — affects how much task context you can give it), <b>temperature</b> (controls randomness of output), <b>fine-tuning</b> (specialise it on domain-specific data).",cmd:"",out:""},
+    {say:"Relevance to robotics: an LLM can parse natural language commands ('bring me the red cup from the left shelf') and convert them into structured robot task descriptions that a VLA or planner can execute. It's the 'understand what the human wants' layer.",cmd:"",out:""}
+   ],
+   trip:"LLMs pattern-match — they don't look things up like a database. They can confidently produce wrong answers (called hallucination). For robot control, always validate LLM outputs against real sensor state and safety rules before turning them into motor commands.",
+   ref:[["LLM","Neural network trained on text, produces text"],["Token","Unit of text (~word or syllable)"],["Context window","How much text the model reads at once"],["Hallucination","Confident but wrong output — a real risk for robotics"],["Fine-tuning","Specialise an LLM on domain data (e.g. robotics commands)"]],
+   mastery:"In one paragraph: what does an LLM do, and what is one specific risk of using an LLM as part of a robot's decision loop?",
+   sol:`<p>An LLM predicts the next token given a sequence, trained on massive text data. At scale this enables reasoning, code generation, and natural language understanding. The key risk for robotics: <b>hallucination</b> — the model produces plausible-sounding but factually wrong outputs with no indication it is wrong. A robot acting on a hallucinated command (wrong object, wrong direction) could damage itself or injure people. Mitigate by: (1) grounding LLM outputs against real sensor readings, (2) requiring structured output with explicit confidence bounds, (3) human confirmation before high-risk actions.</p>`,
+   link:{label:"What is an LLM? (Cloudflare explainer)",url:"https://www.cloudflare.com/learning/ai/what-is-large-language-model/"}},
+
+  {t:"What is llama.cpp — local LLM inference",
+   model:"llama.cpp is a C++ library that runs LLMs efficiently on CPUs (and consumer GPUs) without requiring cloud APIs or expensive hardware. It works by <b>quantizing</b> model weights — compressing from 32-bit floats to 4-bit integers — so a capable model fits in regular RAM and runs fast.",
+   steps:[
+    {say:"Why it exists: full-precision LLMs need GPU clusters. llama.cpp quantizes weights so a 7B-parameter model that would normally need 28 GB of VRAM fits in ~4 GB of RAM and runs on a laptop CPU at 30–50 tokens/second.",cmd:"",out:""},
+    {say:"Why it matters for robotics: a small LLM running locally can parse natural language commands with <b>zero latency</b> and <b>no internet requirement</b> — essential for real-time robot control where cloud round-trips add 1–2 seconds of delay.",cmd:"",out:""},
+    {say:"GGUF format: llama.cpp uses its own model file format (GGUF). Models are downloaded from Hugging Face, converted or downloaded in GGUF format, then run directly.",cmd:"",out:""},
+    {say:"Browse the llama.cpp GitHub (resource link) to see: supported models, how to build it from source, and the basic inference command.",cmd:"",out:""}
+   ],
+   trip:"Bigger model ≠ better for robotics. A 7B quantized model at 50 tokens/sec running locally beats a 70B cloud model with 2-second API latency for a real-time control loop. Match model size to your hardware and your latency budget — not to benchmark leaderboards.",
+   ref:[["llama.cpp","Efficient C++ LLM inference — CPU and GPU"],["Quantization","Compress weights (32-bit→4-bit) to fit in RAM"],["GGUF","Model file format llama.cpp uses"],["Tokens/sec","Output speed — key for real-time use"],["On-device","Runs locally, no internet, low latency"]],
+   mastery:"What is quantization and why does it make LLMs viable on robot hardware (low-end GPUs or CPU)?",
+   sol:`<p><b>Quantization</b>: reduce the numerical precision of model weights. A 7B-parameter model in 32-bit float requires ~28 GB. Quantized to 4-bit, it needs ~4 GB — fitting in normal RAM. Accuracy drops slightly but output quality remains useful.</p>
+<p>For robot hardware: a compact quantized model runs locally at ~50ms latency instead of 1–2 second cloud round-trips. This makes language understanding feasible inside a real-time robot control loop without an internet connection on-site.</p>`,
+   link:{label:"llama.cpp on GitHub",url:"https://github.com/ggml-org/llama.cpp"}}
+ ]},
+
+{id:"g1sdk",icon:"🦿",title:"Unitree G1 SDK",time:"the goal",why:"Everything above leads here. Now you control the robot directly with unitree_sdk2.",
+ resource:{label:"unitree_sdk2 on GitHub",url:"https://github.com/unitreerobotics/unitree_sdk2"},
+ tasks:[
+  {t:"Clone and build unitree_sdk2",
+   model:"The SDK is the C++ library that talks to the G1's motors and sensors. You clone it with git and build it with CMake — both skills you already practiced. Nothing new, just pointed at the real thing.",
+   steps:[
+    {say:"Clone the repository into your home folder.",cmd:"cd ~\ngit clone https://github.com/unitreerobotics/unitree_sdk2.git",out:"Downloads the SDK source."},
+    {say:"Build it the CMake way you learned.",cmd:"cd unitree_sdk2\nmkdir build && cd build\ncmake ..\nmake",out:"Compiles the library + example binaries."}
+   ],
+   trip:"If <code>cmake</code> or <code>make</code> stops, <b>read the error</b> — it almost always names a missing dependency. Install it with <code>sudo apt install &lt;package&gt;</code> (the README lists exact requirements) and re-run. Don't skim past the first error; later errors are usually just fallout from it.",
+   ref:[["git clone URL","Download the SDK"],["cmake ..","Generate build files"],["make","Compile"],["sudo apt install x","Fix a missing dependency"]],
+   mastery:"Clone the SDK and build it successfully. Resolve any missing-dependency errors using apt.",
+   sol:`<pre><code>cd ~
+git clone https://github.com/unitreerobotics/unitree_sdk2.git
+cd unitree_sdk2 && mkdir build && cd build
+cmake .. && make</code></pre><p>Success = build finishes and example binaries appear in <code>build/</code>.</p>`,
+   link:{label:"unitree_sdk2 README",url:"https://github.com/unitreerobotics/unitree_sdk2"}},
+
+  {t:"Connect to the G1 and read robot state",
+   model:"The robot talks over Ethernet using DDS — the same messaging tech under ROS2. The golden first move with any robot: <b>read before you write</b>. Confirm you can see its state before you ever send a command.",
+   steps:[
+    {say:"Connect the Ethernet cable and set your PC's IP to the robot's subnet (the README gives the exact address).",cmd:"",out:"Network link established."},
+    {say:"From <code>build/</code>, run a read-only state example (prints state, doesn't move anything).",cmd:"./read_state_example   # name varies by SDK version",out:"Prints joint positions, IMU, battery."},
+    {say:"Gently move the robot by hand and watch the numbers change.",cmd:"",out:"<b>Changing values = link confirmed.</b>"}
+   ],
+   trip:"Wrong subnet = silence. If you see no data, the #1 cause is your PC's IP not being on the robot's network. Double-check it against the README before suspecting anything else. And keep the robot on a stand for every early test.",
+   ref:[["Set PC IP","Match robot's subnet"],["Read-only example","Prints state, no motion"],["IMU / joints / battery","What you're reading"]],
+   mastery:"Connect to the G1, run a state-reading example, and watch real sensor values stream in.",
+   sol:`<p>Guidance: set your PC's IP to the robot's subnet (README), run a read-only state example from <code>build/</code>, and confirm values change as you move the robot by hand. Robot supported at all times.</p>`,
+   link:{label:"SDK examples folder",url:"https://github.com/unitreerobotics/unitree_sdk2/tree/main/example"}},
+
+  {t:"Run a provided high-level example",
+   model:"The SDK ships with example programs. <b>High-level</b> control sends whole-body commands ('stand', 'walk forward') and the robot keeps its own balance. Always start here before low-level motor control.",
+   steps:[
+    {say:"Pick a high-level locomotion example from the <code>example/</code> folder and open the code.",cmd:"",out:"Read it before running it."},
+    {say:"Find three things in the code: where it connects, what command it sends, and any safety limits.",cmd:"",out:"Understand it, don't just launch it."},
+    {say:"Run it with the robot safely supported and your hand on the e-stop.",cmd:"./high_level_example   # name varies",out:"Robot performs the demo motion."}
+   ],
+   trip:"Never run an example you haven't read. Reading first tells you what the robot is about to do, so nothing surprises you. The command is usually a method on a high-level client object (a <code>Move</code>/<code>SetVelocity</code>-style call) — note its exact name in <i>your</i> version.",
+   ref:[["High-level","Whole-body commands, auto-balance"],["Low-level","Direct motor control (later)"],["e-stop","Always within reach"]],
+   mastery:"Run one official high-level example and watch the robot respond. Note exactly which function sends the command.",
+   sol:`<p>Guidance: choose a high-level example, read it to find the connect call and the command-sending method, then run with the robot supported and e-stop ready. Write down the exact command function name for your SDK version.</p>`,
+   link:{label:"Unitree developer docs",url:"https://support.unitree.com/home/en/developer"}},
+
+  {t:"Send a basic command safely",
+   model:"Now you modify an example to send your <i>own</i> command — small and safe. The flow mirrors ROS2: build a command message, set its fields, publish it on a loop. This is where your skills become real motion.",
+   steps:[
+    {say:"Start from a working example so the connection boilerplate is already correct.",cmd:"",out:"Don't start from scratch."},
+    {say:"Change exactly one thing: a small target well within the documented limits (e.g. a gentle posture shift).",cmd:"",out:"Tiny first, always."},
+    {say:"Send it inside a controlled loop, staying next to the e-stop.",cmd:"",out:"Robot performs your command."}
+   ],
+   trip:"Resist the urge to send a big or fast motion 'to really see it work'. First commands should be small and slow — a tiny safe target proves your code path works without risking the hardware or yourself. Scale up only once it behaves.",
+   ref:[["Copy a working example","Correct boilerplate"],["Change one value","Stay within limits"],["Controlled loop","Send at a steady rate"]],
+   mastery:"Modify an example to send one small, safe command of your own and observe the robot execute it.",
+   sol:`<p>Guidance: copy a working example, change one target to a small in-limit value, send it in a controlled loop with the robot supported and e-stop in hand. This is your Python/ROS2/C++ skills turning into deliberate motion.</p>`,
+   link:{label:"SDK examples",url:"https://github.com/unitreerobotics/unitree_sdk2/tree/main/example"}},
+
+  {t:"Understand the control loop and safety limits",
+   model:"Real control runs a tight loop: read state → compute command → send → repeat, often hundreds of times per second. Understanding this loop is what separates copying examples from actually engineering behaviour.",
+   steps:[
+    {say:"In an example, find the main <code>while</code> loop that repeats read→compute→send.",cmd:"",out:"That's the control loop."},
+    {say:"Find how it holds a steady rate (a sleep or timer) and note the frequency.",cmd:"",out:"Late commands = unstable robot."},
+    {say:"Locate where joint angle, velocity, and torque limits are enforced (constants or clamp calls).",cmd:"",out:"Write a note on each limit."}
+   ],
+   trip:"Two things keep a robot safe: a <b>steady loop rate</b> (irregular timing makes it wobble) and <b>respecting limits</b> (never exceed joint/velocity/torque caps). Always have an emergency stop and a 'go limp / damping' command ready before you run anything.",
+   ref:[["Loop rate","Fast + steady (e.g. hundreds of Hz)"],["Joint/vel/torque limits","Hard caps — never exceed"],["Damping / e-stop","Your failsafes"]],
+   mastery:"In an example, find the control loop and its rate, and locate where joint/torque limits are enforced. Write notes on each.",
+   sol:`<p>Model answer: the loop is a <code>while</code> repeating read→compute→send, held to a fixed rate by a sleep/timer; limits appear as constants or <code>clamp</code>/min-max calls before a command is sent. Note the rate and each limit.</p>`,
+   link:{label:"Developer support",url:"https://support.unitree.com/home/en/developer"}},
+
+  {t:"Capstone: your own first control program",
+   model:"Your graduation project: a small, original, safe program on the G1 that reads state, decides, and acts — the sense→decide→act loop, now on real hardware. Everything in this course was preparation for this.",
+   steps:[
+    {say:"Structure it as a loop: SENSE (read state) → DECIDE (your logic) → clamp to limits → ACT (send command).",cmd:"connect()\nwhile running:\n    state = read_state()      # SENSE\n    cmd = my_logic(state)     # DECIDE\n    cmd = clamp(cmd, limits)  # stay safe\n    send(cmd)                 # ACT",out:""},
+    {say:"Keep the behaviour small and safe (e.g. respond to a tilt or a joint reading), with an e-stop always available.",cmd:"",out:"Robot runs your behaviour."},
+    {say:"Version it with git and push to GitHub.",cmd:'git init && git add . && git commit -m "My first G1 behavior"',out:"Your work is saved + shareable."}
+   ],
+   trip:"The exact API calls depend on your SDK version and firmware — confirm every call against the README and the example code, don't assume. And keep the first behaviour modest: a clean, safe, working small program beats an ambitious one that's unsafe or doesn't run.",
+   mastery:"Design, build, and safely run an original sense→decide→act program on the G1. Commit it to a git repo.",
+   sol:`<pre><code>connect to robot
+loop (steady rate):
+    state  = read robot state     <span class="out"># SENSE</span>
+    action = your_logic(state)     <span class="out"># DECIDE</span>
+    action = clamp(action, limits) <span class="out"># stay safe</span>
+    send(action)                   <span class="out"># ACT</span>
+    (emergency stop always ready)</code></pre><p>Then <code>git init / add / commit</code> and push. If a stranger could clone it, read your README, and run it safely — you've hit intermediate.</p>`,
+   link:{label:"unitree_sdk2 repo",url:"https://github.com/unitreerobotics/unitree_sdk2"}}
+ ]}
+];
+
+const PROJECTS={
+  wsl:{name:"Backup & Project Toolkit",brief:"Build a small command-line workflow that proves you can live in the terminal and version your work with git.",reqs:["Create a clean <code>~/projects</code> structure with at least two nested folders (use <code>mkdir -p</code>).","Write a script <code>backup.sh</code> that copies a folder into <code>/mnt/c/</code> and prints a confirmation.","Make it executable with <code>chmod +x backup.sh</code> and run it with <code>./backup.sh</code>.","Turn the folder into a git repo: <code>git init</code>, commit the script, write a clear message."],stretch:["Add a timestamp to the backup folder name using <code>$(date +%F)</code>.","Push the repo to a new GitHub repository."],pass:"You can build the structure, run your script, and show <code>git log</code> with at least one commit — without copying commands from notes."},
+  python:{name:"Robot Mission Logger (CLI app)",brief:"A text-based program that tracks 'missions' for your future robot. Touches every Python lesson at once.",reqs:["A <code>Mission</code> class with a name and a done/not-done status.","A menu loop (<code>while</code> + <code>input()</code>) to add, list, and complete missions.","Save missions to a file and reload them when the program restarts.","Wrap risky input in <code>try/except</code> so bad input never crashes it."],stretch:["Add priorities and sort the list by priority.","Track a timestamp for when each mission was completed."],pass:"You can add missions, quit, restart, and your missions are still there — with no crash on bad input."},
+  ros2:{name:"Obstacle-Avoider (3-node system)",brief:"A miniature sense→decide→act robot brain — the exact pattern you'll use on the G1, with fake data.",reqs:["A <b>sensor</b> node publishing a fake distance reading on a topic.","A <b>brain</b> node that subscribes and publishes a command: 'GO' if far, 'STOP' if close.","A <b>motor</b> node that subscribes to the command and logs what it would do.","All three in one colcon package, launched with <code>ros2 run</code>."],stretch:["Add a parameter for the stop-distance threshold so you can tune it without editing code.","Open <code>rqt_graph</code> and screenshot the three connected nodes."],pass:"All three nodes run together and the motor reacts in real time as sensor values cross the threshold."},
+  cpp:{name:"Fast Stats Engine",brief:"Rebuild real logic in compiled C++ — organized, fast, and built the way the SDK is built.",reqs:["A <code>Stats</code> class split into <code>stats.h</code>/<code>stats.cpp</code> taking a <code>std::vector&lt;double&gt;</code>.","Methods for mean, min, max, and count.","A <code>main.cpp</code> that fills a vector and prints all the stats.","Built with a <code>CMakeLists.txt</code> (not a hand-typed g++ command)."],stretch:["Add standard deviation.","Wrap it as a ROS2 C++ node that publishes the computed mean."],pass:"<code>cmake .. && make && ./app</code> compiles cleanly and prints correct stats from your Stats class."},
+  aiml:{name:"AI/ML Concepts Brief",brief:"Consolidate your understanding of the AI landscape by writing a short technical summary in your own words.",reqs:["Write a paragraph each on VLM, VLA, and LLM — define each and give one robotics use case.","Describe how UniFolm-VLA could be used with the G1: what does it take as input, what does it output?","Explain what llama.cpp enables and one specific advantage it has over a cloud API for real-time robotics.","Describe the training vs fine-tuning tradeoff and why fine-tuning is the practical path for one G1."],stretch:["Find one other open-source VLA project and compare it to UniFolm-VLA (architecture, supported robots, data format).","Install llama.cpp locally in WSL and run a small quantized model (e.g. Llama 3 8B GGUF)."],pass:"You can explain all four concepts to a teammate who hasn't done these lessons, without looking at notes — and connect each concept to a concrete G1 use case."},
+  g1sdk:{name:"Reactive Posture Guardian",brief:"Your first real safety-aware robot behaviour — read state, decide, act, all within limits.",reqs:["Read the robot's orientation/IMU state in a loop.","Decide: if tilt exceeds a safe threshold you define, trigger a safe damping/standing response.","Send that command through a clean control loop at a steady rate.","Keep a working emergency stop; test only with the robot supported."],stretch:["Log every state+decision to a file to review the run.","Make the threshold tunable and test a few values safely."],pass:"With the robot supported, your program reads live state and triggers the correct safe response when you tilt it past the threshold."}
+};
+const GRAND={name:"Grand Challenge: Autonomous Behavior, End to End",brief:"Prove the whole stack came together. One project that uses every skill from WSL to the SDK.",reqs:["<b>WSL/git:</b> the whole project lives in a git repo you push to GitHub.","<b>Python or C++:</b> your own clean, well-structured code (classes, functions, error handling).","<b>ROS2:</b> at least two nodes communicating — a sense→decide→act loop.","<b>SDK:</b> reads real G1 state and sends a safe, original behaviour in response.","A README explaining what it does, how to run it, and the safety limits."],pass:"Someone could clone your repo, read the README, and run your behaviour on a G1 safely. At that point you are, by any reasonable definition, an intermediate robot programmer."};
+
+/* ============================ APP ============================ */
+const KEY="g1-learning-station-v4";
+function loadState(){try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return {};}}
+function saveState(s){localStorage.setItem(KEY,JSON.stringify(s));}
+let state=loadState();
+const app=document.getElementById("app");
+
+function tKey(sid,i){return sid+":"+i;}
+function stageById(sid){return ROADMAP.find(s=>s.id===sid);}
+function flatLessons(){const a=[];ROADMAP.forEach(s=>s.tasks.forEach((t,i)=>a.push({sid:s.id,i})));return a;}
+
+function totals(){
+  let total=0,done=0;
+  ROADMAP.forEach(s=>{s.tasks.forEach((_,i)=>{total++;if(state[tKey(s.id,i)])done++;});total++;if(state["proj:"+s.id])done++;});
+  total++;if(state["grand"])done++;
+  return {total,done,pct:total?Math.round(done/total*100):0};
+}
+function findNext(){
+  for(const s of ROADMAP){
+    for(let i=0;i<s.tasks.length;i++){if(!state[tKey(s.id,i)])return{type:"lesson",sid:s.id,i,label:s.tasks[i].t,where:s.title};}
+    if(!state["proj:"+s.id])return{type:"project",sid:s.id,label:"🎯 Project: "+PROJECTS[s.id].name,where:s.title};
+  }
+  if(!state["grand"])return{type:"grand",label:"🏆 "+GRAND.name,where:"Final challenge"};
+  return null;
+}
+
+/* -------- HOME -------- */
+function renderHome(){
+  window.scrollTo(0,0);
+  const t=totals(), next=findNext();
+  let html=`<header><h1>🤖 Unitree G1 Learning Station</h1>
+    <p>From zero experience to intermediate. Click a lesson to open its full walkthrough. Everything saves automatically.</p></header>`;
+
+  if(t.pct===100) html+=`<div class="celebrate show">🎉 <strong>All complete!</strong> You went from terminal newbie to G1 programmer. Go build something real.</div>`;
+
+  if(next){
+    html+=`<div class="nextup" onclick="goNext()"><div>
+      <div class="tag">▶ Next up</div><div class="what">${next.label}</div>
+      <div class="where">${next.where}</div></div><div class="go">→</div></div>`;
+  }
+
+  html+=`<div class="overall">
+    <div class="row"><div>Overall progress</div><div class="pct">${t.pct}%</div></div>
+    <div class="bar"><span style="width:${t.pct}%"></span></div>
+    <div class="row" style="margin-top:14px;margin-bottom:0;">
+      <div style="color:var(--muted);font-size:.82rem;">${t.done} of ${t.total} items done</div>
+      <button class="reset" onclick="resetAll()">Reset all progress</button></div></div>`;
+
+  let firstIncomplete=false;
+  ROADMAP.forEach((s,sIdx)=>{
+    let done=0; s.tasks.forEach((_,i)=>{if(state[tKey(s.id,i)])done++;});
+    if(state["proj:"+s.id])done++;
+    const total=s.tasks.length+1, complete=done===total, pct=Math.round(done/total*100);
+    const active=!complete&&!firstIncomplete; if(active)firstIncomplete=true;
+    const openKey="open:"+s.id;
+    const isOpen=state[openKey]!==undefined?state[openKey]:active;
+    const o=OVERVIEWS[s.id];
+    const chain=STAGE_ORDER.map(([id,nm],i)=>`<span class="node${id===s.id?' here':''}">${nm}</span>${i<STAGE_ORDER.length-1?'<span class="arrow">→</span>':''}`).join("");
+
+    html+=`<div class="stage${complete?' done':''}${active?' active':''}${isOpen?' open':''}">
+      <div class="stage-head" onclick="toggleStage('${s.id}')">
+        <div class="badge">${complete?'✓':s.icon}</div>
+        <div class="stage-title"><h2>Stage ${sIdx+1}: ${s.title}</h2><div class="meta">⏱ ${s.time}</div></div>
+        <div class="stage-pct">${done}/${total} · ${pct}%</div><div class="chev">▶</div></div>
+      <div class="stage-body">
+        <div class="why">💡 ${s.why}</div>
+        <div class="overview"><div class="otitle">📖 Chapter Overview</div>
+          <div class="oblock"><span class="olabel">Why we learn this</span><span class="otext">${o.why}</span></div>
+          <div class="oblock"><span class="olabel">How it connects</span><span class="otext">${o.connect}</span></div>
+          <div class="oblock"><span class="olabel">Where it gets you</span><span class="otext">${o.ready}</span></div>
+          <div class="chain">${chain}</div></div>
+        <a class="resource-link" href="${s.resource.url}" target="_blank" rel="noopener">📚 ${s.resource.label} ↗</a>`;
+
+    s.tasks.forEach((task,i)=>{
+      const d=!!state[tKey(s.id,i)];
+      html+=`<div class="lrow${d?' done':''}" onclick="openLesson('${s.id}',${i})">
+        <div class="lcheck">${d?'✓':i+1}</div>
+        <div class="lname">${task.t}</div><div class="lgo">Open →</div></div>`;
+    });
+
+    const p=PROJECTS[s.id], pd=!!state["proj:"+s.id], popen=!!state["popen:"+s.id];
+    html+=`<div class="project${pd?' done':''}${popen?' popen':''}">
+      <div class="project-head" onclick="toggleProj(event,'${s.id}')">
+        <input type="checkbox" ${pd?'checked':''} onclick="event.stopPropagation();toggleProjDone('${s.id}',this.checked)">
+        <div class="pt"><div class="ptag">🎯 Project Challenge — test your comprehension</div><div class="pname">${p.name}</div></div>
+        <div class="pchev">▶</div></div>
+      <div class="project-content"><p>${p.brief}</p>
+        <h4>Requirements</h4><ul>${p.reqs.map(r=>'<li>'+r+'</li>').join('')}</ul>
+        <h4>Stretch goals</h4><ul>${p.stretch.map(r=>'<li>'+r+'</li>').join('')}</ul>
+        <div class="pass"><b>✅ You've passed when:</b> ${p.pass}</div></div></div>`;
+
+    html+=`</div></div>`;
+  });
+
+  const gd=!!state["grand"], gopen=!!state["gopen"];
+  html+=`<div class="grand${gopen?' gopen':''}">
+    <div class="grand-head" onclick="toggleGrand(event)">
+      <input type="checkbox" ${gd?'checked':''} onclick="event.stopPropagation();toggleGrandDone(this.checked)">
+      <div class="gt"><div class="gtag">🏆 Final integration project</div><h2>${GRAND.name}</h2></div>
+      <div class="gchev" style="margin-left:auto;">▶</div></div>
+    <div class="grand-content"><p>${GRAND.brief}</p>
+      <h4>Requirements</h4><ul>${GRAND.reqs.map(r=>'<li>'+r+'</li>').join('')}</ul>
+      <div class="pass"><b>✅ You've passed when:</b> ${GRAND.pass}</div></div></div>`;
+
+  html+=`<footer>Progress is stored locally in this browser. Use the same browser each session.</footer>`;
+  app.innerHTML=html;
+}
+
+/* -------- LESSON PAGE -------- */
+function renderLesson(sid,i){
+  window.scrollTo(0,0);
+  const s=stageById(sid); if(!s||!s.tasks[i]){location.hash="";return;}
+  const task=s.tasks[i];
+  const flat=flatLessons();
+  const idx=flat.findIndex(x=>x.sid===sid&&x.i===i);
+  const prev=idx>0?flat[idx-1]:null, nextL=idx<flat.length-1?flat[idx+1]:null;
+  const done=!!state[tKey(sid,i)];
+
+  let html=`<div class="lesson-page">
+    <div class="breadcrumb"><a href="#" onclick="return go('')">🏠 Home</a> &nbsp;›&nbsp; ${s.icon} ${s.title} &nbsp;›&nbsp; Lesson ${i+1} of ${s.tasks.length}</div>
+    <h1>${task.t}</h1><div class="sub">Stage: ${s.title}</div>`;
+
+  // Mental model
+  if(task.model) html+=`<div class="sec model"><h3>🧠 The mental model</h3><p>${task.model}</p></div>`;
+
+  // Walkthrough
+  if(task.steps&&task.steps.length){
+    html+=`<div class="sec"><h3>⌨️ Do this with me</h3>`;
+    task.steps.forEach((st,n)=>{
+      html+=`<div class="step"><div class="snum">${n+1}</div><div class="sbody">
+        <div class="say">${st.say}</div>
+        ${st.cmd?`<pre><code>${escapeHtml(st.cmd)}</code></pre>`:''}
+        ${st.out?`<div class="expect">${st.out}</div>`:''}
+      </div></div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // Trip-ups
+  if(task.trip) html+=`<div class="sec trip"><h3>⚠️ Where beginners trip</h3><p>${task.trip}</p></div>`;
+
+  // Reference
+  if(task.ref&&task.ref.length){
+    html+=`<div class="sec"><h3>📋 Quick reference</h3><table class="ref">${task.ref.map(r=>`<tr><td><code>${escapeHtml(r[0])}</code></td><td>${r[1]}</td></tr>`).join('')}</table></div>`;
+  }
+
+  // Mastery + solution
+  html+=`<div class="sec mastery"><h3>🎯 Mastery test</h3><p>${task.mastery}</p>
+    <button class="soltoggle" onclick="toggleSol(this)">🔑 Show solution</button>
+    <div class="solbody">${task.sol||'<p>(try it yourself first!)</p>'}</div>
+    <p style="margin-top:12px;"><a href="${task.link.url}" target="_blank" rel="noopener">🔗 ${task.link.label} ↗</a></p></div>`;
+
+  // Footer: mark complete + nav
+  html+=`<div class="lpfoot">
+    <button class="markbtn ${done?'isdone':''}" onclick="toggleLessonDone('${sid}',${i})">${done?'✓ Completed — click to undo':'Mark this lesson complete'}</button>
+  </div>
+  <div class="lpfoot" style="margin-top:12px;">
+    <a class="navbtn ${prev?'':'disabled'}" href="#" onclick="return prev?openLesson('${prev?prev.sid:''}',${prev?prev.i:0}):false;">← Previous</a>
+    <a class="navbtn" href="#" onclick="return go('')">All lessons</a>
+    <a class="navbtn ${nextL?'':'disabled'}" href="#" onclick="return nextL?openLesson('${nextL?nextL.sid:''}',${nextL?nextL.i:0}):false;" style="margin-left:auto;">Next →</a>
+  </div></div>`;
+
+  app.innerHTML=html;
+}
+
+function escapeHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+/* -------- actions -------- */
+function go(hash){location.hash=hash;return false;}
+function openLesson(sid,i){location.hash="#/lesson/"+sid+"/"+i;return false;}
+function goNext(){const n=findNext();if(!n)return;if(n.type==="lesson"){openLesson(n.sid,n.i);}else{state["open:"+(n.sid||'')]=true;if(n.type==="project")state["popen:"+n.sid]=true;if(n.type==="grand")state["gopen"]=true;saveState(state);location.hash="";setTimeout(()=>{const el=document.querySelector(n.type==="grand"?".grand":".project");if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},60);}}
+function toggleStage(sid){const k="open:"+sid;const cur=state[k]!==undefined?state[k]:false;state[k]=!cur;saveState(state);renderHome();}
+function toggleProj(e,sid){const k="popen:"+sid;state[k]=!state[k];saveState(state);renderHome();}
+function toggleProjDone(sid,v){state["proj:"+sid]=v;saveState(state);renderHome();}
+function toggleGrand(e){state["gopen"]=!state["gopen"];saveState(state);renderHome();}
+function toggleGrandDone(v){state["grand"]=v;saveState(state);renderHome();}
+function toggleLessonDone(sid,i){state[tKey(sid,i)]=!state[tKey(sid,i)];saveState(state);renderLesson(sid,i);}
+function toggleSol(btn){const b=btn.nextElementSibling;const sh=b.classList.toggle("show");btn.textContent=sh?"🙈 Hide solution":"🔑 Show solution";}
+function resetAll(){if(confirm("Reset ALL progress? This cannot be undone.")){state={};saveState(state);renderHome();}}
+
+/* -------- router -------- */
+function route(){
+  const h=location.hash;
+  const m=h.match(/^#\/lesson\/([^/]+)\/(\d+)$/);
+  if(m){renderLesson(m[1],parseInt(m[2],10));}
+  else{renderHome();}
+}
+window.addEventListener("hashchange",route);
+route();
+</script>
+</body>
+</html>
